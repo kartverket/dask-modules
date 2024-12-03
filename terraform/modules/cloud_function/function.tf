@@ -11,6 +11,12 @@ resource "google_storage_bucket_object" "this" {
   source = data.archive_file.this.output_path
 }
 
+resource "google_project_iam_member" "cloud_build" {
+  project = var.project
+  role    = "roles/cloudbuild.builds.builder"
+  member  = "serviceAccount:${var.service_account_email}"
+}
+
 resource "google_cloudfunctions2_function" "this" {
   name        = var.name
   location    = var.location
@@ -21,8 +27,9 @@ resource "google_cloudfunctions2_function" "this" {
   lifecycle { ignore_changes = [build_config[0].source[0].storage_source[0].generation, build_config[0].docker_repository] }
 
   build_config {
-    runtime     = var.runtime
-    entry_point = var.entry_point
+    runtime         = var.runtime
+    entry_point     = var.entry_point
+    service_account = var.service_account_email
 
     source {
       storage_source {
@@ -42,6 +49,7 @@ resource "google_cloudfunctions2_function" "this" {
     all_traffic_on_latest_revision = var.all_traffic_on_latest_revision
     service_account_email          = var.service_account_email
   }
+  depends_on = [google_project_iam_member.cloud_build]
 }
 
 resource "google_cloudfunctions2_function_iam_member" "invoker" {
