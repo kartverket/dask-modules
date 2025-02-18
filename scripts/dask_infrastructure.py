@@ -3,8 +3,7 @@ import json
 
 from common import replace_special_characters, append_content_to_end_of_file
 
-TF_FOLDERS = {"dev": "dev", "prod": "prod"}
-
+ENVIRONMENTS = ["dev", "prod"]
 
 def edit_common_output_file(filepath: str, params: dict):
     tf_output_file_path: str = f'{filepath}/modules/common/output.tf'
@@ -23,8 +22,8 @@ def edit_ws_configure_file(filepath: str, params: dict):
 
     project_id_map: dict = params["gcp_project_ids"]
 
-    for env, tf_folder in TF_FOLDERS.items():
-        tf_ws_configure_filepath = f'{filepath}/{tf_folder}/4_workspace_configure.tf'
+    for env in ENVIRONMENTS:
+        tf_ws_configure_filepath = f'{filepath}/{env}/4_workspace_configure.tf'
         # Define the new team data
         new_team_data = generate_module_definition(project_name, project_id_map, env)
 
