@@ -3,11 +3,11 @@ import json
 
 from common import replace_special_characters, append_content_to_end_of_file
 
-TF_FOLDERS = {"dev": "dev", "prod": "prod_v2"}
+TF_FOLDERS = {"dev": "dev", "prod": "prod"}
 
 
 def edit_common_output_file(filepath: str, params: dict):
-    tf_output_file_path: str = f'{filepath}/modules_v2/common/output.tf'
+    tf_output_file_path: str = f'{filepath}/modules/common/output.tf'
     project_name: str = params.get("project_name")
 
     content = f'''
@@ -34,7 +34,7 @@ def edit_ws_configure_file(filepath: str, params: dict):
 def generate_module_definition(project_name: str, project_id_map: dict, env: str) -> str:
     module = f'''
     module "{project_name.lower()}" {{
-      source = "../modules_v2/dbx_team_resources"
+      source = "../modules/dbx_team_resources"
 
       team                    = module.common.{project_name.lower()}
       team_deploy_sa          = "{project_name.lower()}-deploy@{project_id_map[env]}.iam.gserviceaccount.com"
@@ -53,7 +53,7 @@ def generate_module_definition(project_name: str, project_id_map: dict, env: str
 
 
 def edit_common_teams_file(filepath: str, params: dict):
-    tf_teams_file_path: str = f'{filepath}/modules_v2/common/teams.tf'
+    tf_teams_file_path: str = f'{filepath}/modules/common/teams.tf'
     ad_group_name: str = params["ad_groups"][0]
     project_name: str = params.get("project_name")
     area_name: str = params["area_name"]
