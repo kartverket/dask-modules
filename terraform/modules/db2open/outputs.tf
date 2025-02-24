@@ -1,36 +1,26 @@
-output "delta_sharing_config_urls" {
-  value = {
-    for key, recipient in databricks_recipient.db2open :
-    key => recipient.tokens[0].activation_url
-  }
+output "delta_sharing_config_url" {
+  value       = var.recipient != "" ? databricks_recipient.db2open[0].tokens[0].activation_url : null
   sensitive   = true
-  description = "URLs to download the Delta Sharing configuration for each recipient."
+  description = "URL to download the Delta Sharing configuration for the recipient."
 }
 
-output "databricks_recipient_names" {
-  value = {
-    for key, recipient in databricks_recipient.db2open :
-    key => recipient.name
-  }
-  description = "Mapping of Databricks recipients."
+output "databricks_recipient_name" {
+  value       = var.recipient != "" ? databricks_recipient.db2open[0].name : null
+  description = "Name of the Databricks recipient."
 }
 
 # Sensitive output containing tokens and sharing codes
 output "databricks_recipient_data" {
-  value = {
-    for key, recipient in databricks_recipient.db2open :
-    key => {
-      tokens         = recipient.tokens
-      sharing_code   = recipient.sharing_code
-      activation_url = try(recipient.tokens[0].activation_url, "No activation URL available")
-    }
-  }
+  value = var.recipient != "" ? {
+    tokens         = databricks_recipient.db2open[0].tokens
+    sharing_code   = databricks_recipient.db2open[0].sharing_code
+    activation_url = try(databricks_recipient.db2open[0].tokens[0].activation_url, "No activation URL available")
+  } : null
   sensitive   = true
-  description = "Data for each Databricks recipient."
+  description = "Data for the Databricks recipient."
 }
 
-
 output "external_share_name" {
-  value       = databricks_share.ext_table_share
+  value       = databricks_share.ext_table_share.name
   description = "The name of the external share."
 }

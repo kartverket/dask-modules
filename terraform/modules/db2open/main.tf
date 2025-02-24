@@ -1,10 +1,5 @@
-locals {
-  valid_recipients = compact(var.recipients) # Removes empty strings
-}
-
 resource "random_password" "db2opensharecode" {
-  for_each = toset(local.valid_recipients)
-
+  count   = var.recipient != "" ? 1 : 0
   length  = 16
   special = true
 }
@@ -12,18 +7,16 @@ resource "random_password" "db2opensharecode" {
 resource "databricks_recipient" "db2open" {
   provider = databricks.workspace
 
-  for_each = toset(local.valid_recipients)
-
-  name                = "recipient_${var.share_name}_${each.key}"
-  comment             = "Recipient av db2open opprettet i Terraform for ${each.key}"
+  count               = var.recipient != "" ? 1 : 0
+  name                = "recipient_${var.share_name}_${var.recipient}"
+  comment             = "Recipient av db2open opprettet i Terraform for ${var.recipient}"
   authentication_type = "TOKEN"
-  sharing_code        = random_password.db2opensharecode[each.key].result
+  sharing_code        = random_password.db2opensharecode[0].result
 }
 
 resource "databricks_share" "ext_table_share" {
   provider = databricks.workspace
-
-  name = var.share_name
+  name     = var.share_name
 
   dynamic "object" {
     for_each = var.tables_to_share
@@ -39,13 +32,10 @@ resource "databricks_grants" "share_grants" {
   provider = databricks.workspace
   share    = databricks_share.ext_table_share.name
 
-  count = length(databricks_recipient.db2open) > 0 ? 1 : 0
+  count = var.recipient != "" ? 1 : 0
 
-  dynamic "grant" {
-    for_each = databricks_recipient.db2open
-    content {
-      principal  = grant.value.name
-      privileges = ["SELECT"]
-    }
+  grant {
+    principal  = databricks_recipient.db2open[0].name
+    privileges = ["SELECT"]
   }
 }

@@ -1,4 +1,4 @@
-variable "recipients" {
+variable "recipient" {
   description = "List of valid recipient organization numbers."
 }
 
