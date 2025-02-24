@@ -40,6 +40,8 @@ def generate_module_definition(project_name: str, project_id_map: dict, env: str
       project_id              = "{project_id_map[env]}"
       common_users_and_groups = local.common_users_and_groups
       config                  = local.config
+      sql_endpoint_id         = databricks_sql_endpoint.this.id
+      env                     = var.env 
     
       providers = {{
         databricks.accounts   = databricks.accounts
