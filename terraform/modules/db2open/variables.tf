@@ -46,3 +46,9 @@ variable "scheduler_service_account_email" {
   description = "Service account that Cloud Scheduler will use to invoke the Cloud Function"
   type        = string
 }
+
+variable cron_schedule {
+    description = "Cron schedule for the Cloud Scheduler job"
+    type        = string
+    default     = "29 13 * * *"
+}
