@@ -5,8 +5,6 @@ resource "random_password" "db2opensharecode" {
 }
 
 resource "databricks_recipient" "db2open" {
-  provider = databricks.workspace
-
   count               = var.recipient != "" ? 1 : 0
   name                = "recipient_${var.share_name}_${var.recipient}"
   comment             = "Recipient av db2open opprettet i Terraform for ${var.recipient}"
@@ -15,8 +13,7 @@ resource "databricks_recipient" "db2open" {
 }
 
 resource "databricks_share" "ext_table_share" {
-  provider = databricks.workspace
-  name     = var.share_name
+  name = var.share_name
 
   dynamic "object" {
     for_each = var.tables_to_share
@@ -29,8 +26,7 @@ resource "databricks_share" "ext_table_share" {
 }
 
 resource "databricks_grants" "share_grants" {
-  provider = databricks.workspace
-  share    = databricks_share.ext_table_share.name
+  share = databricks_share.ext_table_share.name
 
   count = var.recipient != "" ? 1 : 0
 
