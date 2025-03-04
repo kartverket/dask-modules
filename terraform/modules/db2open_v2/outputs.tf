@@ -12,8 +12,8 @@ output "databricks_recipient_name" {
 # Sensitive output containing tokens and sharing codes
 output "databricks_recipient_data" {
   value = var.recipient != "" ? {
-    tokens         = databricks_recipient.db2open[0].tokens
-    sharing_code   = databricks_recipient.db2open[0].sharing_code
+    tokens         = databricks_recipient.db2open.tokens
+    sharing_code   = databricks_recipient.db2open.sharing_code
     activation_url = try(databricks_recipient.db2open.tokens[0].activation_url, "No activation URL available")
   } : null
   sensitive   = true
