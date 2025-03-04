@@ -31,7 +31,7 @@ resource "google_storage_bucket" "skyporten_bucket" {
   uniform_bucket_level_access = true
 }
 
-resource "google_storage_bucket_iam_policy" "legacy_bucket_reader" {
+resource "google_storage_bucket_iam_policy" "client_access_to_bucket" {
   bucket      = google_storage_bucket.skyporten_bucket.name
   policy_data = data.google_iam_policy.client_access.policy_data
 }
