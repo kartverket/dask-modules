@@ -2,8 +2,14 @@ locals {
   maskinporten_scope = "${var.main_scope}:${var.sub_scope}"
 }
 
+resource "random_string" "random" {
+  length  = 4
+  special = false
+  upper   = false
+}
+
 resource "google_service_account" "skyporten_consumer" {
-  account_id  = "sp-${var.sub_scope}-${var.org_number}"
+  account_id  = "sp-${var.org_number}-${random_string.random.result}"
   description = "Service account for the Skyporten consumer for organization ${var.org_number} with scope ${local.maskinporten_scope}"
 }
 
@@ -23,7 +29,7 @@ resource "google_service_account_iam_policy" "workload_identity_policy" {
 }
 
 resource "google_storage_bucket" "skyporten_bucket" {
-  name                        = "sp-${var.sub_scope}-${var.org_number}-${var.project_id}"
+  name                        = "sp-${var.project_id}-${random_string.random.result}"
   location                    = var.region
   uniform_bucket_level_access = true
 }
