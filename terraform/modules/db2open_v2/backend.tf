@@ -6,8 +6,5 @@ terraform {
     google = {
       source = "hashicorp/google"
     }
-    archive = {
-      source = "hashicorp/archive"
-    }
   }
 }

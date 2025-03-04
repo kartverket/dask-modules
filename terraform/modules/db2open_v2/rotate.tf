@@ -1,10 +1,3 @@
-# I main-modul. pass på at relevante APIer er aktivert
-# resource "google_project_service" "activate_services" {
-#   for_each = toset(["cloudfunctions.googleapis.com", "run.googleapis.com", "cloudbuild.googleapis.com", "cloudscheduler.googleapis.com", "storage.googleapis.com"])
-#   project  = var.google_cloud_project
-#   service  = each.value
-# }
-
 module "rotate_function" {
   count                 = var.recipient != "" ? 1 : 0
   source                = "git::https://github.com/kartverket/dask-modules//terraform/modules/cloud_function_v2?ref=v2.6.1"
