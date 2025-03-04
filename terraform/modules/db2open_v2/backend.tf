@@ -1,13 +1,13 @@
 terraform {
   required_providers {
     databricks = {
-      source                = "databricks/databricks"
+      source = "databricks/databricks"
     }
     google = {
-      source  = "hashicorp/google"
+      source = "hashicorp/google"
     }
     archive = {
-      source  = "hashicorp/archive"
+      source = "hashicorp/archive"
     }
   }
 }

@@ -47,8 +47,8 @@ variable "scheduler_service_account_email" {
   type        = string
 }
 
-variable cron_schedule {
-    description = "Cron schedule for the Cloud Scheduler job"
-    type        = string
-    default     = "29 13 * * *"
+variable "cron_schedule" {
+  description = "Cron schedule for the Cloud Scheduler job"
+  type        = string
+  default     = "29 13 * * *"
 }

@@ -21,7 +21,7 @@ module "rotate_function" {
     DATABRICKS_GOOGLE_SERVICE_ACCOUNT = var.scheduler_service_account_email
     BUCKET_NAME                       = var.bucket_name
     TOKEN_FILE_NAME                   = var.token_file_name
-    DELTA_SHARE_NAME                  = var.share_name                    # <-- Add this variable
-    DELTA_RECIPIENT_NAME              = databricks_recipient.db2open.name # <-- Add this variable
+    DELTA_SHARE_NAME                  = var.share_name                       # <-- Add this variable
+    DELTA_RECIPIENT_NAME              = databricks_recipient.db2open[0].name # <-- Add this variable
   }
 }

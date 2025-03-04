@@ -35,7 +35,7 @@ def main(request):
     if len(rotated_token.tokens) != 1:
         print("No tokens found or too many tokens found")
         print(rotated_token.tokens)
-        raise Exception("No tokens found")
+        raise Exception("No tokens found or too many tokens found")
 
     activation_token = rotated_token.tokens[0].activation_url.split("?")[-1]
     file_content = { "activation_token": activation_token, "expiration_time": expiration_datetime.isoformat() }

@@ -6,7 +6,7 @@ resource "random_password" "db2opensharecode" {
 
 resource "databricks_recipient" "db2open" {
   count               = var.recipient != "" ? 1 : 0
-  name                = "recipient_${var.share_name}_${var.recipient}"
+  name                = "recipient_${var.share_name}"
   comment             = "Recipient av db2open opprettet i Terraform for ${var.recipient}"
   authentication_type = "TOKEN"
   sharing_code        = random_password.db2opensharecode[0].result
