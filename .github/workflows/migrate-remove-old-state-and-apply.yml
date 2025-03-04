@@ -1,0 +1,140 @@
+name: Remove terraform state for deprecated workspace
+
+on:
+  workflow_call:
+    inputs:
+      service_account:
+        description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
+        required: true
+        type: string
+      auth_project_number:
+        description: "The GCP Project Number used for authentication. A 12-digit number used as a unique identifier for the project. Used to find workload identity pool."
+        required: true
+        type: string
+      runner:
+        description: "The GitHub runner to use when running the deploy. This can for example be `atkv1-dev`"
+        required: true
+        type: string
+      workload_identity_provider_override:
+        description: "The ID of the provider to use for authentication. Only used for overriding the default workload identity provider based on project number. It should be in the format of `projects/{{project}}/locations/global/workloadIdentityPools/{{workload_identity_pool_id}}/providers/{{workload_identity_pool_provider_id}}`"
+        required: false
+        type: string
+      working_directory:
+        description: "The directory in which to run terraform, i.e. where the Terraform files are placed. The path is relative to the root of the repository"
+        required: false
+        type: string
+        default: "."
+      project_id:
+        description: 'The GCP Project ID to use as the "active project" when running Terraform. Example 123456789987'
+        required: false
+        type: string
+      environment:
+        description: "The GitHub environment to use when deploying. See [using environments for deployment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) for more info on this"
+        required: false
+        type: string
+      terraform_workspace:
+        description: "When provided will set a workspace as the active workspace when planning and deploying"
+        required: false
+        type: string
+      terraform_option_1:
+        description: "An additional terraform option to be passed to plan and apply. For example `-var-file=dev.tfvars` and `-var=<variableName>=<variableValue>`"
+        required: false
+        type: string
+      terraform_init_option_1:
+        description: "An additional config to be passed to terraform init. For example `-backend-config=dev.gcs.tfbackend`"
+        required: false
+        type: string
+      terraform_init_option_2:
+        description: "An additional config to be passed to terraform init. For example `-backend-config=dev.gcs.tfbackend`"
+        required: false
+        type: string
+      terraform_init_option_3:
+        description: "An additional config to be passed to terraform init. For example `-backend-config=dev.gcs.tfbackend`"
+        required: false
+        type: string
+      destroy:
+        description: "An optional boolean which runs terraform destroy when set to true. Defaluts to false"
+        required: false
+        type: boolean
+        default: false
+
+env:
+  WORKLOAD_IDENTITY_PROVIDER_OVERRIDE: ${{ inputs.workload_identity_provider_override }}
+  AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
+  SERVICE_ACCOUNT: ${{ inputs.service_account }}
+  WORKING_DIRECTORY: ${{ inputs.working_directory }}
+  PROJECT_ID: ${{ inputs.project_id }}
+  ENVIRONMENT: ${{ inputs.environment }}
+  DESTROY: ${{ inputs.destroy }}
+  TF_INIT_OPTION_1: ${{ inputs.terraform_init_option_1 }}
+  TF_INIT_OPTION_2: ${{ inputs.terraform_init_option_2 }}
+  TF_INIT_OPTION_3: ${{ inputs.terraform_init_option_3 }}
+  TF_OPTION_1: ${{ inputs.terraform_option_1 }}
+
+
+jobs:
+  setup-env:
+    runs-on: ubuntu-latest
+    outputs:
+      workload_identity_provider: ${{ steps.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
+    steps:
+      - name: Set vars
+        id: set-output
+        run: |
+          PRODUCT_NAME=$(echo $SERVICE_ACCOUNT | sed 's/-deploy.*//')
+          DEFAULT_WORKLOAD_IDENTITY="projects/$AUTH_PROJECT_NUMBER/locations/global/workloadIdentityPools/$PRODUCT_NAME-deploy-pool/providers/github-provider"
+          OVERRIDE=$WORKLOAD_IDENTITY_PROVIDER_OVERRIDE
+          PROVIDER=${OVERRIDE:-$DEFAULT_WORKLOAD_IDENTITY}
+          echo "WORKLOAD_IDENTITY_PROVIDER=$PROVIDER" >> $GITHUB_OUTPUT
+  deploy_databricks:
+    needs: [ setup-env ]
+    name: Terraform Apply or Destroy
+    runs-on: ${{ inputs.runner }}
+    environment: ${{ inputs.environment }}
+
+    # Disallow parallel jobs for same env to allow aquiring state lock instead of crashing
+    concurrency: ${{ inputs.environment }}
+
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+    env:
+      TF_WORKSPACE: ${{ inputs.terraform_workspace }}
+      WORKLOAD_IDENTITY_PROVIDER: ${{ needs.setup-env.outputs.WORKLOAD_IDENTITY_PROVIDER }}
+
+    steps:
+      # Checkout the repository to the GitHub Actions runner
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2.0.3
+        with:
+          terraform_wrapper: false
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+          project_id: ${{ env.PROJECT_ID }}
+
+      # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+      - name: Terraform Init
+        run: |
+          terraform init -input=false \
+              ${TF_INIT_OPTION_1:+"$TF_INIT_OPTION_1"} \
+              ${TF_INIT_OPTION_2:+"$TF_INIT_OPTION_2"} \
+              ${TF_INIT_OPTION_3:+"$TF_INIT_OPTION_3"}
+
+      # Run terraform destroy on push to main if 'destroy' is set to true
+      - name: Terraform remove old state
+        run: |
+          terraform state list | grep databricks_ | while IFS= read -r resource; do terraform state rm "$resource"; done
+
+      - name: Run Terraform apply into new workspace
+        run: terraform apply -input=false -auto-approve=true ${TF_OPTION_1:+"$TF_OPTION_1"}
