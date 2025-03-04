@@ -1,11 +1,11 @@
 output "delta_sharing_config_url" {
-  value       = var.recipient != "" ? databricks_recipient.db2open[0].tokens[0].activation_url : null
+  value       = var.recipient != "" ? databricks_recipient.db2open.tokens[0].activation_url : null
   sensitive   = true
   description = "URL to download the Delta Sharing configuration for the recipient."
 }
 
 output "databricks_recipient_name" {
-  value       = var.recipient != "" ? databricks_recipient.db2open[0].name : null
+  value       = var.recipient != "" ? databricks_recipient.db2open.name : null
   description = "Name of the Databricks recipient."
 }
 
@@ -14,7 +14,7 @@ output "databricks_recipient_data" {
   value = var.recipient != "" ? {
     tokens         = databricks_recipient.db2open[0].tokens
     sharing_code   = databricks_recipient.db2open[0].sharing_code
-    activation_url = try(databricks_recipient.db2open[0].tokens[0].activation_url, "No activation URL available")
+    activation_url = try(databricks_recipient.db2open.tokens[0].activation_url, "No activation URL available")
   } : null
   sensitive   = true
   description = "Data for the Databricks recipient."
