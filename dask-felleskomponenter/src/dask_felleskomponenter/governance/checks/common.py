@@ -15,7 +15,7 @@ class TableMetadata:
     emneord: Optional[str] = field(default=None)
     epsg_koder: Optional[str] = field(default=None)
     begrep: Optional[str] = field(default=None)
-    bruksvilkaar: Optional[str] = field(default=None)
+    sikkerhetsnivaa: Optional[str] = field(default=None)
 
     optional_params: Dict[str, Any] = field(default_factory=dict)
 
