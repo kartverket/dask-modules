@@ -1,7 +1,6 @@
 import json
 import sys
-from typing import List
-from common import append_content_to_end_of_file
+from common import append_content_to_end_of_file, is_content_in_file
 
 
 def generate_module_definition(project_name: str) -> str: 
@@ -45,19 +44,23 @@ def edit_file(file_path, params):
 
     # Handle variables.tf
     variable_def = f'variable "{project_name}_project_id" {{}}\n'
-    append_content_to_end_of_file(file_path + "/variables.tf", variable_def)
+    if not is_content_in_file(file_path + "/variables.tf", variable_def):
+        append_content_to_end_of_file(file_path + "/variables.tf", variable_def)
 
     # Handle *.tfvars files
     get_project_var_entry = lambda project: f'\n{project_name}_project_id = "{project}"'
     
     sandbox_var_entry = get_project_var_entry(project_id_sandbox)
-    append_content_to_end_of_file(file_path + "/sandbox.tfvars", sandbox_var_entry)
+    if not is_content_in_file(file_path + "/sandbox.tfvars", sandbox_var_entry):
+        append_content_to_end_of_file(file_path + "/sandbox.tfvars", sandbox_var_entry)
 
     dev_var_entry = get_project_var_entry(project_id_dev)
-    append_content_to_end_of_file(file_path + "/dev.tfvars", dev_var_entry)
+    if not is_content_in_file(file_path + "/dev.tfvars", dev_var_entry):
+        append_content_to_end_of_file(file_path + "/dev.tfvars", dev_var_entry)
 
     prod_var_entry = get_project_var_entry(project_id_prod)
-    append_content_to_end_of_file(file_path + "/prod.tfvars", prod_var_entry)
+    if not is_content_in_file(file_path + "/prod.tfvars", prod_var_entry):
+        append_content_to_end_of_file(file_path + "/prod.tfvars", prod_var_entry)
 
 
 if __name__ == "__main__":
@@ -71,4 +74,4 @@ if __name__ == "__main__":
 
     edit_file(file_path, params)
 
-# python gcp_service_accounts.py './path/to/gcp_service_accounts' '{ "team_name": "TestTeam", "project_id_sandbox": "project-sandbox", "project_id_dev": "project-dev", "project_id_test": "project-test", "project_id_prod": "project-prod"  }'
+# python gcp_service_accounts.py './path/to/gcp_service_accounts' '{ "project_name": "testteam", "gcp_project_ids": { "sandbox": "project-sandbox", "dev": "project-dev", "prod": "project-prod" } }'
