@@ -3,7 +3,7 @@ import sys
 from common import append_content_to_end_of_file, is_content_in_file
 
 
-def generate_module_definition(project_name: str) -> str: 
+def generate_module_definition(project_name: str) -> str:
     module = f'''
     module "{project_name.lower()}" {{
         source    = "./project_team"
@@ -42,24 +42,22 @@ def edit_file(file_path, params):
     module_definition = generate_module_definition(project_name)
     append_content_to_end_of_file(file_path + "/modules.tf", module_definition)
 
-    # Handle variables.tf
-    variable_def = f'variable "{project_name}_project_id" {{}}\n'
-    if not is_content_in_file(file_path + "/variables.tf", variable_def):
+    # if project_name_project_id exists, this variable is previously added
+    if not is_content_in_file(file_path + "/variables.tf", f"{project_name}_project_id"):
+        # Handle variables.tf
+        variable_def = f'variable "{project_name}_project_id" {{}}\n'
         append_content_to_end_of_file(file_path + "/variables.tf", variable_def)
 
-    # Handle *.tfvars files
-    get_project_var_entry = lambda project: f'\n{project_name}_project_id = "{project}"'
-    
-    sandbox_var_entry = get_project_var_entry(project_id_sandbox)
-    if not is_content_in_file(file_path + "/sandbox.tfvars", sandbox_var_entry):
+        # Handle *.tfvars files
+        get_project_var_entry = lambda project: f'\n{project_name}_project_id = "{project}"'
+
+        sandbox_var_entry = get_project_var_entry(project_id_sandbox)
         append_content_to_end_of_file(file_path + "/sandbox.tfvars", sandbox_var_entry)
 
-    dev_var_entry = get_project_var_entry(project_id_dev)
-    if not is_content_in_file(file_path + "/dev.tfvars", dev_var_entry):
+        dev_var_entry = get_project_var_entry(project_id_dev)
         append_content_to_end_of_file(file_path + "/dev.tfvars", dev_var_entry)
 
-    prod_var_entry = get_project_var_entry(project_id_prod)
-    if not is_content_in_file(file_path + "/prod.tfvars", prod_var_entry):
+        prod_var_entry = get_project_var_entry(project_id_prod)
         append_content_to_end_of_file(file_path + "/prod.tfvars", prod_var_entry)
 
 
