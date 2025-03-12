@@ -43,6 +43,11 @@ on:
         description: "The url to the GitHub repository."
         required: true
         type: string
+      deploy_branch:
+        description: "The branch to use when updating the Databricks repo."
+        required: false
+        default: "main"
+        type: string
 
 env:
   WORKLOAD_IDENTITY_PROVIDER_OVERRIDE: ${{ inputs.workload_identity_provider_override }}
@@ -54,6 +59,7 @@ env:
   DATABRICKS_REPO_PATH: ${{ inputs.databricks_repo_path }}
   REPO_URL: ${{ inputs.repo_url }}
   DATABRICKS_HOST: ${{ inputs.databricks_host }}
+  DATABRICKS_DEPLOY_BRANCH: ${{ inputs.deploy_branch }}
 
 jobs:
   setup-env:
@@ -131,7 +137,7 @@ jobs:
       - name: Update Databricks Repo if it exists
         if: env.REPO_EXISTS == 'true'
         run: |
-          databricks repos update ${{ env.DATABRICKS_REPO_PATH }} --branch "main"
+          databricks repos update ${{ env.DATABRICKS_REPO_PATH }} --branch "${{ env.DATABRICKS_DEPLOY_BRANCH }}"
       - name: Delete git-credentials
         if: always() && env.CREDENTIAL_ID != ''
         run: |
