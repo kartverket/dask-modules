@@ -1,115 +1,118 @@
 name: Build and publish Docker Image
 
 on:
-  workflow_call:
-    inputs:
-      context_path:
-        required: true
-        type: string
-      version_file_name:
-        required: true
-        type: string
-      apps_repo:
-        required: true
-        type: string
-      version_file_directory:
-        description: "Directory where version file with image ref is stored"
-        required: false
-        default: "./versions"
-        type: string
-    outputs:
-      image_url:
-        value: ${{ jobs.build.outputs.image_url }}
-    secrets:
-      PAT_REPO:
-        required: true
+    workflow_call:
+        inputs:
+            context_path:
+                required: true
+                type: string
+            version_file_name:
+                required: true
+                type: string
+            apps_repo:
+                required: true
+                type: string
+            version_file_directory:
+                description: "Directory where version file with image ref is stored"
+                required: false
+                default: "./versions"
+                type: string
+            identity:
+                required: true
+                type: string
+        outputs:
+            image_url:
+                value: ${{ jobs.build.outputs.image_url }}
 
 env:
-  REGISTRY: ghcr.io
-  CONTEXT_PATH: ${{ inputs.context_path }}
-  APPS_REPO: ${{ inputs.apps_repo }}
-  BRANCH: ${{ github.head_ref || github.ref_name }}
+    REGISTRY: ghcr.io
+    CONTEXT_PATH: ${{ inputs.context_path }}
+    APPS_REPO: ${{ inputs.apps_repo }}
+    BRANCH: ${{ github.head_ref || github.ref_name }}
+    IDENTITY: ${{ inputs.identity }}
 
 jobs:
-  build:
-    name: Build container image
-    runs-on: ubuntu-latest
-    outputs:
-      image_url: ${{ steps.set_output.outputs.image_url }}
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    build:
+        name: Build container image
+        runs-on: ubuntu-latest
+        outputs:
+            image_url: ${{ steps.set_output.outputs.image_url }}
+        steps:
+            - uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f
+              id: octo-sts
+              with:
+                  scope: kartverket/dask-apps
+                  identity: ${{ env.IDENTITY }}
 
-      - name: Check for changes in context path
-        id: check_changes
-        run: |
-          if git diff --quiet HEAD^ HEAD -- ${{ env.CONTEXT_PATH }}; then
-            echo "No changes in ${{ env.CONTEXT_PATH }}. Skipping build."
-            echo "::set-output name=skip_build::true"
-          else
-            echo "::set-output name=skip_build::false"
-          fi
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
-      - name: Login to Github Container Registry
-        if: steps.check_changes.outputs.skip_build == 'false'
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
+            - name: Check for changes in context path
+              id: check_changes
+              run: |
+                  if git diff --quiet HEAD^ HEAD -- ${{ env.CONTEXT_PATH }}; then
+                    echo "No changes in ${{ env.CONTEXT_PATH }}. Skipping build."
+                    echo "::set-output name=skip_build::true"
+                  else
+                    echo "::set-output name=skip_build::false"
+                  fi
 
-      - name: Build and push Docker image
-        if: steps.check_changes.outputs.skip_build == 'false'
-        id: build-docker
-        uses: docker/build-push-action@v5
-        with:
-          file: ${{ env.CONTEXT_PATH }}/Dockerfile
-          context: ${{ env.CONTEXT_PATH }}
-          push: ${{ !github.event.pull_request.draft }}
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}:latest
+            - name: Login to Github Container Registry
+              if: steps.check_changes.outputs.skip_build == 'false'
+              uses: docker/login-action@v2
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ github.token }}
 
-      - name: Checkout the repository
-        if: steps.check_changes.outputs.skip_build == 'false'
-        uses: actions/checkout@v3
-        with:
-          repository: kartverket/${{ env.APPS_REPO }}
-          ref: main
-          token: ${{ secrets.PAT_REPO }}
+            - name: Build and push Docker image
+              if: steps.check_changes.outputs.skip_build == 'false'
+              id: build-docker
+              uses: docker/build-push-action@v5
+              with:
+                  file: ${{ env.CONTEXT_PATH }}/Dockerfile
+                  context: ${{ env.CONTEXT_PATH }}
+                  push: ${{ !github.event.pull_request.draft }}
+                  tags: ${{ env.REGISTRY }}/${{ github.repository }}:latest
 
-      - name: Create file
-        if: steps.check_changes.outputs.skip_build == 'false'
-        run: |
-          setup_directory () {
-              DIRECTORY=${{ inputs.version_file_directory }}
-              touch $DIRECTORY/${{ inputs.version_file_name }}
-              echo "\"${{ env.REGISTRY }}/${{ github.repository }}@${{ steps.build-docker.outputs.digest }}\"" > $DIRECTORY/${{ inputs.version_file_name }} 
-          }
+            - name: Checkout the repository
+              if: steps.check_changes.outputs.skip_build == 'false'
+              uses: actions/checkout@v3
+              with:
+                  repository: kartverket/${{ env.APPS_REPO }}
+                  ref: main
+                  token: ${{ steps.octo-sts.outputs.token }}
 
-          if [[ "${{ env.BRANCH }}" == "main" ]]; then
-              setup_directory 
-          fi
+            - name: Create file
+              if: steps.check_changes.outputs.skip_build == 'false'
+              run: |
+                  setup_directory () {
+                      DIRECTORY=${{ inputs.version_file_directory }}
+                      touch $DIRECTORY/${{ inputs.version_file_name }}
+                      echo "\"${{ env.REGISTRY }}/${{ github.repository }}@${{ steps.build-docker.outputs.digest }}\"" > $DIRECTORY/${{ inputs.version_file_name }} 
+                  }
 
-      - name: Commit and Push Changes
-        if: steps.check_changes.outputs.skip_build == 'false'
-        run: |
-          git config --global user.email "noreply@kartverket.no"
-          git config --global user.name "DASK CI"
-          git add .
-          if git diff --staged --quiet; then
-            echo "No changes to commit."
-          else
-            git commit -m "Update ${{ inputs.version_file_name }}"
-            git push
-          fi
+                  if [[ "${{ env.BRANCH }}" == "main" ]]; then
+                      setup_directory 
+                  fi
 
-      - name: Set output with build values
-        if: steps.check_changes.outputs.skip_build == 'false'
-        id: set_output
-        run: |
-          echo "image_url=${{ env.REGISTRY }}/${{ github.repository }}@${{ steps.build-docker.outputs.digest }}" >> $GITHUB_OUTPUT
+            - name: Commit and Push Changes
+              if: steps.check_changes.outputs.skip_build == 'false'
+              run: |
+                  git config --global user.email "noreply@kartverket.no"
+                  git config --global user.name "DASK CI"
+                  git add .
+                  if git diff --staged --quiet; then
+                    echo "No changes to commit."
+                  else
+                    git commit -m "Update ${{ inputs.version_file_name }}"
+                    git push
+                  fi
+
+            - name: Set output with build values
+              if: steps.check_changes.outputs.skip_build == 'false'
+              id: set_output
+              run: |
+                  echo "image_url=${{ env.REGISTRY }}/${{ github.repository }}@${{ steps.build-docker.outputs.digest }}" >> $GITHUB_OUTPUT
