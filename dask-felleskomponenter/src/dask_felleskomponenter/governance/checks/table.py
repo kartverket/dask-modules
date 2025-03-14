@@ -19,7 +19,7 @@ def check_beskrivelse(metadata: TableMetadata, context: List[MetadataError]) -> 
     return context
 
 def check_tilgangsnivaa(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
-    kodeliste_url = "https://register.geonorge.no/metadata-kodelister/tilgangsrestriksjoner"
+    kodeliste_url = "https://op.europa.eu/en/web/eu-vocabularies/concept-scheme/-/resource?uri=http://publications.europa.eu/resource/authority/access-right"
 
     if not check_codelist_value(kodeliste_url, metadata.tilgangsnivaa):
         valid_values = get_valid_codelist_values(kodeliste_url)
