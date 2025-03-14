@@ -19,11 +19,11 @@ def check_beskrivelse(metadata: TableMetadata, context: List[MetadataError]) -> 
     return context
 
 def check_tilgangsnivaa(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
-    kodeliste_url = "https://op.europa.eu/en/web/eu-vocabularies/concept-scheme/-/resource?uri=http://publications.europa.eu/resource/authority/access-right"
-
-    if not check_codelist_value(kodeliste_url, metadata.tilgangsnivaa):
-        valid_values = get_valid_codelist_values(kodeliste_url)
-        context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "tilgangsnivaa", "tilgangsrestriksjoner", metadata.tilgangsnivaa == None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
+    kodeliste_path = "tilgangsnivaa_kodeliste.json"  # Path relative to the kodelister directory
+    
+    if not check_codelist_value_local(kodeliste_path, metadata.tilgangsnivaa):
+        valid_values = get_valid_codelist_values_local(kodeliste_path)
+        context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "tilgangsnivaa", "tilgangsrestriksjoner", metadata.tilgangsnivaa is None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
     
     return context
 
@@ -50,11 +50,11 @@ def check_emneord(metadata: TableMetadata, context: List[MetadataError]) -> List
     return context
 
 def check_Sikkerhetsnivaa(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
-    kodeliste_url = "https://register.geonorge.no/metadata-kodelister/sikkerhetsniva"
-
-    if not check_codelist_value(kodeliste_url, metadata.sikkerhetsnivaa):
-        valid_values = get_valid_codelist_values(kodeliste_url)
-        context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "sikkerhetsnivaa", "sikkerhetsniva", metadata.sikkerhetsnivaa == None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
+    kodeliste_path = "sikkerhetsnivaa_kodeliste.json"  # Path relative to the kodelister directory
+    
+    if not check_codelist_value_local(kodeliste_path, metadata.sikkerhetsnivaa):
+        valid_values = get_valid_codelist_values_local(kodeliste_path)
+        context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "sikkerhetsnivaa", "sikkerhetsniva", metadata.sikkerhetsnivaa is None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
     
     return context
 
