@@ -64,6 +64,7 @@ def edit_common_teams_file(filepath: str, params: dict):
       ad_group_name = "AAD - TF - TEAM - {ad_group_name}"
       team_name     = "{project_name.lower()}"
       area_name     = "{area_special_chars_replaced.lower()}"
+      project_name  = "{project_name.lower()}"
     }}
     '''
 
