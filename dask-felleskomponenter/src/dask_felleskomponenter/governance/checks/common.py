@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+import os
+import json
 
 import requests
 
@@ -49,9 +51,8 @@ def get_valid_codelist_values_local(kodeliste_path: str, override_kodeliste_keyw
     """
     Fetches codelist values from local JSON files in the kodelister directory
     """
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    kodelister_dir = os.path.join(base_dir, 'kodelister')
-    full_path = os.path.join(kodelister_dir, kodeliste_path)
+    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'kodelister')
+    full_path = os.path.join(base_dir, kodeliste_path)
     
     kodeliste_entry = "label" if override_kodeliste_keyword is None else override_kodeliste_keyword
     

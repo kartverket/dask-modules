@@ -1,5 +1,5 @@
 from typing import List, Optional
-from .common import MetadataError, check_codelist_value, TableMetadata, get_valid_codelist_values
+from .common import MetadataError, check_codelist_value, TableMetadata, get_valid_codelist_values, check_codelist_value_local, get_valid_codelist_values_local
 
 def _generate_metadata_error(catalog: str, schema: str, table: str, field: str, type: str, is_missing: bool, valid_values_description: Optional[str] = None, valid_values: str | List[str] = "string"):
     error_reason = "mangler" if is_missing else "er ugyldig"
