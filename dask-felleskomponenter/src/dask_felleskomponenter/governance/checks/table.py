@@ -49,7 +49,7 @@ def check_emneord(metadata: TableMetadata, context: List[MetadataError]) -> List
     
     return context
 
-def check_Sikkerhetsnivaa(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
+def check_sikkerhetsnivaa(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
     kodeliste_path = "sikkerhetsnivaa_kodeliste.json"  # Path relative to the kodelister directory
     
     if not check_codelist_value_local(kodeliste_path, metadata.sikkerhetsnivaa):
