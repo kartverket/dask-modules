@@ -10,6 +10,7 @@ class TableMetadata:
     catalog: Optional[str] = field(default=None)
     schema: Optional[str] = field(default=None)
     table: Optional[str] = field(default=None)
+    tittel: Optional[str] = field(default=None)
     beskrivelse: Optional[str] = field(default=None)
     tilgangsnivaa: Optional[str] = field(default=None)
     medaljongnivaa: Optional[str] = field(default=None)
