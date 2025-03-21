@@ -2,6 +2,7 @@
     "catalog": "catalog",
     "schema": "schema",
     "table": "table",
+    "tittel": "tittel",
     "beskrivelse": "beskrivelse",
     "tilgangsnivaa": "Allmen tilgang",
     "medaljongnivaa": "gold",
