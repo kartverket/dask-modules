@@ -1,111 +1,121 @@
 name: Create empty GitHub repo and clone monorepo into it
 
 on:
-  workflow_dispatch:
-    inputs:
-      team_name:
-        description: "The team name"
-        required: true
-        type: string
-      project_name:
-        description: "The project name used to create the data-ingestor repo"
-        required: true
-        type: string
-      service_account:
-        description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
-        required: true
-        type: string
-      auth_project_number:
-        description: "The GCP Project Number used for authentication. A 12-digit number used as a unique identifier for the project. Used to find workload identity pool."
-        required: true
-        type: string
-      script_params:
-        description: "Parameters to use in the script"
-        required: false
-      debug_mode:
-        description: "If the workflow should actually create resources or just run through without doing so."
-        required: false
-        type: boolean
-        default: false
+    workflow_dispatch:
+        inputs:
+            team_name:
+                description: "The team name"
+                required: true
+                type: string
+            project_name:
+                description: "The project name used to create the data-ingestor repo"
+                required: true
+                type: string
+            service_account:
+                description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
+                required: true
+                type: string
+            auth_project_number:
+                description: "The GCP Project Number used for authentication. A 12-digit number used as a unique identifier for the project. Used to find workload identity pool."
+                required: true
+                type: string
+            script_params:
+                description: "Parameters to use in the script"
+                required: false
+            debug_mode:
+                description: "If the workflow should actually create resources or just run through without doing so."
+                required: false
+                type: boolean
+                default: false
+            identity:
+                description: "The identity (repo name) to use for creating octo-sts token"
+                required: true
+                type: string
 
 env:
-  GITHUB_TOKEN: ${{ secrets.DASK_ONBOARDING_PAT }}
-  DEBUG_MODE: ${{ inputs.debug_mode }}
-  TEAM_NAME: ${{ inputs.team_name }} # Lowercase-name-for-team
-  REPO_NAME: ${{ inputs.project_name }}-data-ingestor
-  AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
-  SERVICE_ACCOUNT: ${{ inputs.service_account }}
+    DEBUG_MODE: ${{ inputs.debug_mode }}
+    TEAM_NAME: ${{ inputs.team_name }} # Lowercase-name-for-team
+    REPO_NAME: ${{ inputs.project_name }}-data-ingestor
+    AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
+    SERVICE_ACCOUNT: ${{ inputs.service_account }}
+    IDENTITY: ${{ inputs.identity }}
 
 jobs:
-  create_and_clone_repo:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create empty repo
-        if: env.DEBUG_MODE == 'false'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ env.GITHUB_TOKEN }}
-          script: |
-            const repoName = '${{ env.REPO_NAME }}';
-            const response = await github.request('POST /orgs/{org}/repos', {
-                org: 'kartverket',
-                name: repoName,
-                description: 'This is your first repository',
-                visibility: 'internal',
-                headers: {
-                  'X-GitHub-Api-Version': '2022-11-28'
-                }
-            });
-            console.log(`Response for creating repo ${repoName}:`, response);
-      - name: Set DASK group as admin
-        if: env.DEBUG_MODE == 'false'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ env.GITHUB_TOKEN }}
-          script: |
-            const repoName = '${{ env.REPO_NAME }}';
-            const teamSlug = 'dask';
-            const response = await github.request('PUT /orgs/{org}/teams/{team_slug}/repos/{owner}/{repo}', {
-              org: 'kartverket',
-              team_slug: teamSlug,
-              owner: 'kartverket',
-              repo: repoName,
-              permission: 'admin',
-              headers: {
-                'X-GitHub-Api-Version': '2022-11-28'
-              }
-            });
-            console.log(`Response for adding DASK group as admin on repo ${repoName}:`, response);
-      - name: Checkout the reference repository
-        uses: actions/checkout@v4
-        with:
-          repository: kartverket/dask-monorepo-reference-setup
-          ref: main
-          token: ${{ env.GITHUB_TOKEN }}
+    create_and_clone_repo:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f
+              id: octo-sts
+              with:
+                  scope: kartverket/${{ env.REPO_NAME }}
+                  identity: ${{ env.IDENTITY }}
 
-      - name: Push to a new branch
-        if: env.DEBUG_MODE == 'false'
-        run: |
-          git config --global user.name "DASK CI"
-          git config --global user.email "noreply@kartverket.no"
-          rm -rf .git
-          git init
-          git add .
-          git commit -m "Initial commit"
-          git branch -M main
-          git remote add origin https://x-access-token:${{env.GITHUB_TOKEN}}@github.com/kartverket/${{ env.REPO_NAME }}.git
-          echo "git status: $(git status)"
-          echo "git push"
-          git push -u origin main
+            - name: Create empty repo
+              if: env.DEBUG_MODE == 'false'
+              uses: actions/github-script@v7
+              with:
+                  github-token: ${{ steps.octo-sts.outputs.token }}
+                  script: |
+                      const repoName = '${{ env.REPO_NAME }}';
+                      const response = await github.request('POST /orgs/{org}/repos', {
+                          org: 'kartverket',
+                          name: repoName,
+                          description: 'This is your first repository',
+                          visibility: 'internal',
+                          headers: {
+                            'X-GitHub-Api-Version': '2022-11-28'
+                          }
+                      });
+                      console.log(`Response for creating repo ${repoName}:`, response);
+            - name: Set DASK group as admin
+              if: env.DEBUG_MODE == 'false'
+              uses: actions/github-script@v7
+              with:
+                  github-token: ${{ steps.octo-sts.outputs.token }}
+                  script: |
+                      const repoName = '${{ env.REPO_NAME }}';
+                      const teamSlug = 'dask';
+                      const response = await github.request('PUT /orgs/{org}/teams/{team_slug}/repos/{owner}/{repo}', {
+                        org: 'kartverket',
+                        team_slug: teamSlug,
+                        owner: 'kartverket',
+                        repo: repoName,
+                        permission: 'admin',
+                        headers: {
+                          'X-GitHub-Api-Version': '2022-11-28'
+                        }
+                      });
+                      console.log(`Response for adding DASK group as admin on repo ${repoName}:`, response);
+            - name: Checkout the reference repository
+              uses: actions/checkout@v4
+              with:
+                  repository: kartverket/dask-monorepo-reference-setup
+                  ref: main
+                  token: ${{ steps.octo-sts.outputs.token }}
 
-  send_success_message_to_pubsub:
-    needs: create_and_clone_repo
-    uses: ./.github/workflows/publish-message-pubsub.yml
-    permissions:
-      id-token: write
-    with:
-      auth_project_number: ${{ inputs.auth_project_number }}
-      service_account: ${{ inputs.service_account }}
-      team_name: ${{ inputs.team_name }}
-      params: ${{ inputs.script_params }}
-      step_id: setup-ingestor
+            - name: Push to a new branch
+              if: env.DEBUG_MODE == 'false'
+              run: |
+                  git config --global user.name "DASK CI"
+                  git config --global user.email "noreply@kartverket.no"
+                  rm -rf .git
+                  git init
+                  git add .
+                  git commit -m "Initial commit"
+                  git branch -M main
+                  git remote add origin https://x-access-token:${{ steps.octo-sts.outputs.token }}@github.com/kartverket/${{ env.REPO_NAME }}.git
+                  echo "git status: $(git status)"
+                  echo "git push"
+                  git push -u origin main
+
+    send_success_message_to_pubsub:
+        needs: create_and_clone_repo
+        uses: ./.github/workflows/publish-message-pubsub.yml
+        permissions:
+            id-token: write
+        with:
+            auth_project_number: ${{ inputs.auth_project_number }}
+            service_account: ${{ inputs.service_account }}
+            team_name: ${{ inputs.team_name }}
+            params: ${{ inputs.script_params }}
+            step_id: setup-ingestor
