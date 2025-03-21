@@ -3,11 +3,11 @@
     "schema": "schema",
     "table": "table",
     "beskrivelse": "beskrivelse",
-    "tilgangsnivaa": "Begrenset",
+    "tilgangsnivaa": "Allmen tilgang",
     "medaljongnivaa": "gold",
     "hovedkategori": "Basisdata",
     "begrep": "Landskap",
     "epsg_koder": "25835",
     "emneord": "bruksomraade",
-    "bruksvilkaar": "Åpne data"
+    "sikkerhetsnivaa": "Ugradert"
 }

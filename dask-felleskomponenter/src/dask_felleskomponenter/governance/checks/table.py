@@ -1,5 +1,5 @@
 from typing import List, Optional
-from .common import MetadataError, check_codelist_value, TableMetadata, get_valid_codelist_values
+from .common import MetadataError, check_codelist_value, TableMetadata, get_valid_codelist_values, check_codelist_value_local, get_valid_codelist_values_local
 
 def _generate_metadata_error(catalog: str, schema: str, table: str, field: str, type: str, is_missing: bool, valid_values_description: Optional[str] = None, valid_values: str | List[str] = "string"):
     error_reason = "mangler" if is_missing else "er ugyldig"
@@ -19,11 +19,11 @@ def check_beskrivelse(metadata: TableMetadata, context: List[MetadataError]) -> 
     return context
 
 def check_tilgangsnivaa(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
-    kodeliste_url = "https://register.geonorge.no/api/register/sikkerhetsniva"
-
-    if not check_codelist_value(kodeliste_url, metadata.tilgangsnivaa):
-        valid_values = get_valid_codelist_values(kodeliste_url)
-        context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "tilgangsnivaa", "sikkerhetsnivaa", metadata.tilgangsnivaa == None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
+    kodeliste_path = "tilgangsnivaa_kodeliste.json"  # Path relative to the kodelister directory
+    
+    if not check_codelist_value_local(kodeliste_path, metadata.tilgangsnivaa):
+        valid_values = get_valid_codelist_values_local(kodeliste_path)
+        context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "tilgangsnivaa", "tilgangsrestriksjoner", metadata.tilgangsnivaa is None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
     
     return context
 
@@ -39,7 +39,7 @@ def check_hovedkategori(metadata: TableMetadata, context: List[MetadataError]) -
 
     if not check_codelist_value(kodeliste_url, metadata.hovedkategori):
         valid_values = get_valid_codelist_values(kodeliste_url)
-        context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "hovedkategori", "hovedkategori", metadata.hovedkategori == None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
+        context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "hovedkategori", "tematisk-hovedkategori", metadata.hovedkategori == None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
     
     return context
 
@@ -49,12 +49,12 @@ def check_emneord(metadata: TableMetadata, context: List[MetadataError]) -> List
     
     return context
 
-def check_bruksvilkaar(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
-    kodeliste_url = "https://register.geonorge.no/metadata-kodelister/tilgangsrestriksjoner"
-
-    if not check_codelist_value(kodeliste_url, metadata.bruksvilkaar):
-        valid_values = get_valid_codelist_values(kodeliste_url)
-        context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "bruksvilkaar", "tilgangsrestriksjoner", metadata.bruksvilkaar == None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
+def check_sikkerhetsnivaa(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
+    kodeliste_path = "sikkerhetsnivaa_kodeliste.json"  # Path relative to the kodelister directory
+    
+    if not check_codelist_value_local(kodeliste_path, metadata.sikkerhetsnivaa):
+        valid_values = get_valid_codelist_values_local(kodeliste_path)
+        context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "sikkerhetsnivaa", "sikkerhetsniva", metadata.sikkerhetsnivaa is None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
     
     return context
 
@@ -68,9 +68,9 @@ def check_begrep(metadata: TableMetadata, context: List[MetadataError]) -> List[
     return context
     
 checks_for_valor = {
-    "bronze": [check_beskrivelse, check_tilgangsnivaa],
-    "silver":   [check_beskrivelse, check_hovedkategori, check_emneord, check_tilgangsnivaa, check_bruksvilkaar],
-    "gold":   [check_beskrivelse, check_hovedkategori, check_emneord, check_begrep, check_tilgangsnivaa, check_bruksvilkaar],
+    "bronze": [check_beskrivelse, check_sikkerhetsnivaa],
+    "silver":   [check_beskrivelse, check_hovedkategori, check_emneord, check_tilgangsnivaa, check_sikkerhetsnivaa],
+    "gold":   [check_beskrivelse, check_hovedkategori, check_emneord, check_begrep, check_tilgangsnivaa, check_sikkerhetsnivaa],
 }
 
 

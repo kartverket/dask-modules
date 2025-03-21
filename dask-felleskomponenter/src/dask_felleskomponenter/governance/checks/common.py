@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+import os
+import json
 
 import requests
 
@@ -15,7 +17,7 @@ class TableMetadata:
     emneord: Optional[str] = field(default=None)
     epsg_koder: Optional[str] = field(default=None)
     begrep: Optional[str] = field(default=None)
-    bruksvilkaar: Optional[str] = field(default=None)
+    sikkerhetsnivaa: Optional[str] = field(default=None)
 
     optional_params: Dict[str, Any] = field(default_factory=dict)
 
@@ -45,6 +47,23 @@ def get_valid_codelist_values(kodeliste_url: str, override_kodeliste_keyword: Op
     valid_values = list(filter(lambda x: x != None, [x.get(kodeliste_entry, None) for x in values_res["containeditems"]]))
     return valid_values
 
+def get_valid_codelist_values_local(kodeliste_path: str, override_kodeliste_keyword: Optional[str] = None) -> List[str]:
+    """
+    Fetches codelist values from local JSON files in the kodelister directory
+    """
+    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'kodelister')
+    full_path = os.path.join(base_dir, kodeliste_path)
+    
+    kodeliste_entry = "label" if override_kodeliste_keyword is None else override_kodeliste_keyword
+    
+    with open(full_path, 'r', encoding='utf-8') as f:
+        values_res = json.load(f)
+    
+    valid_values = list(filter(lambda x: x is not None, 
+                             [x.get(kodeliste_entry, None) for x in values_res["containeditems"]]))
+    
+    return valid_values
+
 def check_codelist_value(kodeliste_url: Optional[str], value: Any, allowed_values: Optional[List[Any]] = None, override_kodeliste_keyword: Optional[str] = None) -> bool:
     if value == None:
         return False
@@ -58,5 +77,23 @@ def check_codelist_value(kodeliste_url: Optional[str], value: Any, allowed_value
     valid_values = get_valid_codelist_values(kodeliste_url, override_kodeliste_keyword)
     return value in valid_values
 
+def check_codelist_value_local(kodeliste_path: str, value: Any, allowed_values: Optional[List[Any]] = None, override_kodeliste_keyword: Optional[str] = None) -> bool:
+    """
+    Checks if a value exists in a local codelist
+    """
+    if value is None:
+        return False
+
+    if allowed_values is not None:
+        return value in allowed_values
+    
+    if kodeliste_path is None:
+        return value is not None
+
+    valid_values = get_valid_codelist_values_local(kodeliste_path, override_kodeliste_keyword)
+    return value in valid_values
+
 if __name__ == "__main__":
+    # Example usage of both local and remote codelist checking
     check_codelist_value("https://register.geonorge.no/api/register/sikkerhetsniva", "Ugradert", None, None)
+    check_codelist_value_local("access-right.json", "PUBLIC", None, None)
