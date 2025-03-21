@@ -42,7 +42,7 @@ jobs:
             - uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f
               id: octo-sts
               with:
-                  scope: kartverket/${{ env.REPO_NAME }}
+                  scope: kartverket/dask-monorepo-reference-setup
                   identity: "dask-modules"
 
             - name: Create empty repo
