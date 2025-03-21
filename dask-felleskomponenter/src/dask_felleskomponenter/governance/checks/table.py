@@ -12,6 +12,12 @@ def _generate_metadata_error(catalog: str, schema: str, table: str, field: str, 
         solution = f"ALTER TABLE {catalog}.{schema}.{table} SET TAGS ( '{field}' = '<<SETT_{field.upper()}_HER>>')"
     return MetadataError(catalog=catalog, schema=schema, table=table, column=None, description=description, solution=solution, for_field=field, valid_values=valid_values)
 
+def check_tittel(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
+    if not check_codelist_value(None, metadata.tittel):
+        context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "tittel", "string", metadata.tittel == None))
+    
+    return context
+
 def check_beskrivelse(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
     if not check_codelist_value(None, metadata.beskrivelse):
         context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "beskrivelse", "string", metadata.beskrivelse == None))
@@ -69,8 +75,8 @@ def check_begrep(metadata: TableMetadata, context: List[MetadataError]) -> List[
     
 checks_for_valor = {
     "bronze": [check_beskrivelse, check_sikkerhetsnivaa],
-    "silver":   [check_beskrivelse, check_hovedkategori, check_emneord, check_tilgangsnivaa, check_sikkerhetsnivaa],
-    "gold":   [check_beskrivelse, check_hovedkategori, check_emneord, check_begrep, check_tilgangsnivaa, check_sikkerhetsnivaa],
+    "silver":   [check_tittel, check_beskrivelse, check_hovedkategori, check_emneord, check_tilgangsnivaa, check_sikkerhetsnivaa],
+    "gold":   [check_tittel, check_beskrivelse, check_hovedkategori, check_emneord, check_begrep, check_tilgangsnivaa, check_sikkerhetsnivaa],
 }
 
 

@@ -24,7 +24,7 @@ class Metadata:
         keys["beskrivelse"] = df_comment.collect()[0]["comment"]
         
         return TableMetadata(
-            catalog=self.catalog, schema=self.schema, table=self.table, 
+            catalog=self.catalog, schema=self.schema, table=self.table, tittel=keys.get("tittel"), 
             beskrivelse=keys.get("beskrivelse"), tilgangsnivaa=keys.get("tilgangsnivaa"), 
             medaljongnivaa=keys.get("medaljongnivaa"), hovedkategori=keys.get("hovedkategori"), 
             emneord=keys.get("emneord"), epsg_koder=keys.get("epsg_koder"), 
