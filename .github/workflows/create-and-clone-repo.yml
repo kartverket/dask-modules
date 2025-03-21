@@ -27,10 +27,6 @@ on:
                 required: false
                 type: boolean
                 default: false
-            identity:
-                description: "The identity (repo name) to use for creating octo-sts token"
-                required: true
-                type: string
 
 env:
     DEBUG_MODE: ${{ inputs.debug_mode }}
@@ -38,7 +34,6 @@ env:
     REPO_NAME: ${{ inputs.project_name }}-data-ingestor
     AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
     SERVICE_ACCOUNT: ${{ inputs.service_account }}
-    IDENTITY: ${{ inputs.identity }}
 
 jobs:
     create_and_clone_repo:
@@ -48,7 +43,7 @@ jobs:
               id: octo-sts
               with:
                   scope: kartverket/${{ env.REPO_NAME }}
-                  identity: ${{ env.IDENTITY }}
+                  identity: "dask-modules"
 
             - name: Create empty repo
               if: env.DEBUG_MODE == 'false'

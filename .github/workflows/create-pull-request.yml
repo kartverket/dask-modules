@@ -42,13 +42,8 @@ on:
                 description: "The GCP Project Number used for authentication. A 12-digit number used as a unique identifier for the project. Used to find workload identity pool."
                 required: true
                 type: string
-            identity:
-                description: "The identity (repo name) to use for creating octo-sts token"
-                required: true
-                type: string
 
 env:
-    GITHUB_TOKEN: ${{ secrets.DASK_ONBOARDING_PAT }}
     SHOULD_CREATE_PR: ${{ inputs.should_create_pr }}
     TARGET_REPO: ${{ inputs.target_repo }}
     FILE_TO_MODIFY_PATH: ${{ inputs.file_to_modify_path }}
@@ -59,7 +54,6 @@ env:
     SERVICE_ACCOUNT: ${{ inputs.service_account }}
     TEAM_NAME: ${{ inputs.team_name }} # Lowercase-name-for-team
     PROJECT_NAME: ${{ inputs.project_name }}
-    IDENTITY: ${{ inputs.identity }}
 
 jobs:
     create_pull_request:
@@ -71,7 +65,7 @@ jobs:
               id: octo-sts
               with:
                   scope: kartverket/${{ env.TARGET_REPO }}
-                  identity: ${{ env.IDENTITY }}
+                  identity: "dask-modules"
 
             - name: Setup Terraform
               uses: hashicorp/setup-terraform@v2.0.3
