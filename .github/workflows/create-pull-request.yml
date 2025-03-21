@@ -112,6 +112,12 @@ jobs:
               working-directory: target-repo
               run: terraform fmt -recursive
 
+            - name: Test token with simple API call
+              run: |
+                  curl -H "Authorization: token ${{ steps.octo-sts.outputs.token }}" \
+                        -H "Accept: application/vnd.github.v3+json" \
+                        https://api.github.com/repos/kartverket/dask-infrastructure
+
             - name: Commit and Push to target repository
               if: env.SHOULD_CREATE_PR == 'true'
               working-directory: target-repo
@@ -126,12 +132,6 @@ jobs:
                   git add .
                   git commit -m "Update files from DASK CI workflow"
                   git push origin $BRANCH_NAME
-
-            - name: Test token with simple API call
-              run: |
-                  curl -H "Authorization: token ${{ steps.octo-sts.outputs.token }}" \
-                        -H "Accept: application/vnd.github.v3+json" \
-                        https://api.github.com/repos/kartverket/dask-infrastructure
 
             - name: Create Pull Request
               id: create_pr
