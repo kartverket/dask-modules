@@ -1,144 +1,144 @@
 name: Deploy Databricks notebooks
 
 on:
-  workflow_call:
-    inputs:
-      service_account:
-        description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
-        required: true
-        type: string
-      auth_project_number:
-        description: "The GCP Project Number used for authentication. A 12-digit number used as a unique identifier for the project. Used to find workload identity pool."
-        required: true
-        type: string
-      runner:
-        description: "The GitHub runner to use when running the deploy. This can for example be `atkv1-dev`"
-        required: true
-        type: string
-      workload_identity_provider_override:
-        description: "The ID of the provider to use for authentication. Only used for overriding the default workload identity provider based on project number. It should be in the format of `projects/{{project}}/locations/global/workloadIdentityPools/{{workload_identity_pool_id}}/providers/{{workload_identity_pool_provider_id}}`"
-        required: false
-        type: string
-      project_id:
-        description: 'The GCP Project ID to use as the "active project" when running Terraform. Example 123456789987'
-        required: false
-        type: string
-      environment:
-        description: "The GitHub environment to use when deploying. See [using environments for deployment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) for more info on this"
-        required: false
-        type: string
-      databricks_repo_path:
-        description: "The path to the repo where the notebooks are located in Databricks."
-        required: true
-        type: string
-      databricks_repo_folder:
-        description: "The folder in the Databricks workspace where the notebooks are located."
-        required: true
-        type: string
-      databricks_host:
-        description: "The host of the Databricks workspace."
-        required: true
-        type: string
-      repo_url:
-        description: "The url to the GitHub repository."
-        required: true
-        type: string
-      deploy_branch:
-        description: "The branch to use when updating the Databricks repo."
-        required: false
-        default: "main"
-        type: string
+    workflow_call:
+        inputs:
+            service_account:
+                description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
+                required: true
+                type: string
+            auth_project_number:
+                description: "The GCP Project Number used for authentication. A 12-digit number used as a unique identifier for the project. Used to find workload identity pool."
+                required: true
+                type: string
+            runner:
+                description: "The GitHub runner to use when running the deploy. This can for example be `atkv1-dev`"
+                required: true
+                type: string
+            workload_identity_provider_override:
+                description: "The ID of the provider to use for authentication. Only used for overriding the default workload identity provider based on project number. It should be in the format of `projects/{{project}}/locations/global/workloadIdentityPools/{{workload_identity_pool_id}}/providers/{{workload_identity_pool_provider_id}}`"
+                required: false
+                type: string
+            project_id:
+                description: 'The GCP Project ID to use as the "active project" when running Terraform. Example 123456789987'
+                required: false
+                type: string
+            environment:
+                description: "The GitHub environment to use when deploying. See [using environments for deployment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) for more info on this"
+                required: false
+                type: string
+            databricks_repo_path:
+                description: "The path to the repo where the notebooks are located in Databricks."
+                required: true
+                type: string
+            databricks_repo_folder:
+                description: "The folder in the Databricks workspace where the notebooks are located."
+                required: true
+                type: string
+            databricks_host:
+                description: "The host of the Databricks workspace."
+                required: true
+                type: string
+            repo_url:
+                description: "The url to the GitHub repository."
+                required: true
+                type: string
+            deploy_branch:
+                description: "The branch to use when updating the Databricks repo."
+                required: false
+                default: "main"
+                type: string
 
 env:
-  WORKLOAD_IDENTITY_PROVIDER_OVERRIDE: ${{ inputs.workload_identity_provider_override }}
-  AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
-  SERVICE_ACCOUNT: ${{ inputs.service_account }}
-  PROJECT_ID: ${{ inputs.project_id }}
-  ENVIRONMENT: ${{ inputs.environment }}
-  DATABRICKS_REPO_FOLDER: ${{ inputs.databricks_repo_folder }}
-  DATABRICKS_REPO_PATH: ${{ inputs.databricks_repo_path }}
-  REPO_URL: ${{ inputs.repo_url }}
-  DATABRICKS_HOST: ${{ inputs.databricks_host }}
-  DATABRICKS_DEPLOY_BRANCH: ${{ inputs.deploy_branch }}
+    WORKLOAD_IDENTITY_PROVIDER_OVERRIDE: ${{ inputs.workload_identity_provider_override }}
+    AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
+    SERVICE_ACCOUNT: ${{ inputs.service_account }}
+    PROJECT_ID: ${{ inputs.project_id }}
+    ENVIRONMENT: ${{ inputs.environment }}
+    DATABRICKS_REPO_FOLDER: ${{ inputs.databricks_repo_folder }}
+    DATABRICKS_REPO_PATH: ${{ inputs.databricks_repo_path }}
+    REPO_URL: ${{ inputs.repo_url }}
+    DATABRICKS_HOST: ${{ inputs.databricks_host }}
+    DATABRICKS_DEPLOY_BRANCH: ${{ inputs.deploy_branch }}
 
 jobs:
-  setup-env:
-    runs-on: ubuntu-latest
-    outputs:
-      workload_identity_provider: ${{ steps.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
-    steps:
-      - name: Set vars
-        id: set-output
-        run: |
-          PRODUCT_NAME=$(echo $SERVICE_ACCOUNT | sed 's/-deploy.*//')
-          DEFAULT_WORKLOAD_IDENTITY="projects/$AUTH_PROJECT_NUMBER/locations/global/workloadIdentityPools/$PRODUCT_NAME-deploy-pool/providers/github-provider"
-          OVERRIDE=$WORKLOAD_IDENTITY_PROVIDER_OVERRIDE
-          PROVIDER=${OVERRIDE:-$DEFAULT_WORKLOAD_IDENTITY}
-          echo "WORKLOAD_IDENTITY_PROVIDER=$PROVIDER" >> $GITHUB_OUTPUT
-  deploy_databricks:
-    needs: [setup-env]
-    name: Databricks deploy to ${{ inputs.environment }}
-    runs-on: ${{ inputs.runner }}
-    environment: ${{ inputs.environment }}
+    setup-env:
+        runs-on: ubuntu-latest
+        outputs:
+            workload_identity_provider: ${{ steps.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
+        steps:
+            - name: Set vars
+              id: set-output
+              run: |
+                  PRODUCT_NAME=$(echo $SERVICE_ACCOUNT | sed 's/-deploy.*//')
+                  DEFAULT_WORKLOAD_IDENTITY="projects/$AUTH_PROJECT_NUMBER/locations/global/workloadIdentityPools/$PRODUCT_NAME-deploy-pool/providers/github-provider"
+                  OVERRIDE=$WORKLOAD_IDENTITY_PROVIDER_OVERRIDE
+                  PROVIDER=${OVERRIDE:-$DEFAULT_WORKLOAD_IDENTITY}
+                  echo "WORKLOAD_IDENTITY_PROVIDER=$PROVIDER" >> $GITHUB_OUTPUT
+    deploy_databricks:
+        needs: [setup-env]
+        name: Databricks deploy to ${{ inputs.environment }}
+        runs-on: ${{ inputs.runner }}
+        environment: ${{ inputs.environment }}
 
-    # Disallow parallel jobs for same env to allow aquiring state lock instead of crashing
-    concurrency: ${{ inputs.environment }}
+        # Disallow parallel jobs for same env to allow aquiring state lock instead of crashing
+        concurrency: ${{ inputs.environment }}
 
-    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
-    defaults:
-      run:
-        shell: bash
+        # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+        defaults:
+            run:
+                shell: bash
 
-    env:
-      WORKLOAD_IDENTITY_PROVIDER: ${{ needs.setup-env.outputs.WORKLOAD_IDENTITY_PROVIDER }}
+        env:
+            WORKLOAD_IDENTITY_PROVIDER: ${{ needs.setup-env.outputs.WORKLOAD_IDENTITY_PROVIDER }}
 
-    steps:
-      # Checkout the repository to the GitHub Actions runner
-      - name: Checkout
-        uses: actions/checkout@v4
+        steps:
+            # Checkout the repository to the GitHub Actions runner
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - id: google_auth
-        name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v1
-        with:
-          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ env.SERVICE_ACCOUNT }}
-          project_id: ${{ env.PROJECT_ID }}
-          create_credentials_file: true
+            - id: google_auth
+              name: Authenticate with Google Cloud
+              uses: google-github-actions/auth@v1
+              with:
+                  workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+                  service_account: ${{ env.SERVICE_ACCOUNT }}
+                  project_id: ${{ env.PROJECT_ID }}
+                  create_credentials_file: true
 
-      - name: Get Databricks output vars
-        id: databricks-output-vars
-        run: |
-          echo "DATABRICKS_HOST=${{ env.DATABRICKS_HOST }}" >> $GITHUB_ENV
-          echo "GOOGLE_CREDENTIALS=${{ steps.google_auth.outputs.credentials_file_path }}" >> $GITHUB_ENV
-      - uses: databricks/setup-cli@main
-        name: Setup databricks CLI
-      - name: Set Databricks env variables
-        run: |
-          echo "CREDENTIAL_ID=''" >> $GITHUB_ENV
-      - name: Create git-credentials
-        run: |
-          OUTPUT=$(databricks git-credentials create gitHub --git-username $GITHUB_ACTOR --personal-access-token ${{ secrets.GITHUB_TOKEN }})
-          echo "$OUTPUT"
-          CREDENTIAL_ID=$(echo "$OUTPUT" | jq -r '.credential_id')
-          echo "CREDENTIAL_ID=$CREDENTIAL_ID" >> $GITHUB_ENV
-      - name: Check if Databricks repo exists
-        run: |
-          set +e 
-          REPO_EXISTS=$(databricks workspace list $DATABRICKS_REPO_FOLDER --output json | \
-            jq -r --arg REPO_PATH "$DATABRICKS_REPO_PATH" \
-            'if . != null then (map(select(.path == $REPO_PATH)) | if length > 0 then "true" else "false" end) else "false" end')
-          echo "REPO_EXISTS=$REPO_EXISTS" >> $GITHUB_ENV
-          set -e
-      - name: Create Databricks Repo if it does not exist
-        if: env.REPO_EXISTS == 'false'
-        run: |
-          databricks repos create ${{ env.REPO_URL }} gitHub --path ${{ env.DATABRICKS_REPO_PATH }}
-      - name: Update Databricks Repo if it exists
-        if: env.REPO_EXISTS == 'true'
-        run: |
-          databricks repos update ${{ env.DATABRICKS_REPO_PATH }} --branch "${{ env.DATABRICKS_DEPLOY_BRANCH }}"
-      - name: Delete git-credentials
-        if: always() && env.CREDENTIAL_ID != ''
-        run: |
-          databricks git-credentials delete $CREDENTIAL_ID
+            - name: Get Databricks output vars
+              id: databricks-output-vars
+              run: |
+                  echo "DATABRICKS_HOST=${{ env.DATABRICKS_HOST }}" >> $GITHUB_ENV
+                  echo "GOOGLE_CREDENTIALS=${{ steps.google_auth.outputs.credentials_file_path }}" >> $GITHUB_ENV
+            - uses: databricks/setup-cli@main
+              name: Setup databricks CLI
+            - name: Set Databricks env variables
+              run: |
+                  echo "CREDENTIAL_ID=''" >> $GITHUB_ENV
+            - name: Create git-credentials
+              run: |
+                  OUTPUT=$(databricks git-credentials create gitHub --git-username $GITHUB_ACTOR --personal-access-token ${{ secrets.GITHUB_TOKEN }})
+                  echo "$OUTPUT"
+                  CREDENTIAL_ID=$(echo "$OUTPUT" | jq -r '.credential_id')
+                  echo "CREDENTIAL_ID=$CREDENTIAL_ID" >> $GITHUB_ENV
+            - name: Check if Databricks repo exists
+              run: |
+                  set +e 
+                  REPO_EXISTS=$(databricks workspace list $DATABRICKS_REPO_FOLDER --output json | \
+                    jq -r --arg REPO_PATH "$DATABRICKS_REPO_PATH" \
+                    'if . != null then (map(select(.path == $REPO_PATH)) | if length > 0 then "true" else "false" end) else "false" end')
+                  echo "REPO_EXISTS=$REPO_EXISTS" >> $GITHUB_ENV
+                  set -e
+            - name: Create Databricks Repo if it does not exist
+              if: env.REPO_EXISTS == 'false'
+              run: |
+                  databricks repos create ${{ env.REPO_URL }} gitHub --path ${{ env.DATABRICKS_REPO_PATH }}
+            - name: Update Databricks Repo if it exists
+              if: env.REPO_EXISTS == 'true'
+              run: |
+                  databricks repos update ${{ env.DATABRICKS_REPO_PATH }} --branch "${{ env.DATABRICKS_DEPLOY_BRANCH }}"
+            - name: Delete git-credentials
+              if: always() && env.CREDENTIAL_ID != ''
+              run: |
+                  databricks git-credentials delete $CREDENTIAL_ID
