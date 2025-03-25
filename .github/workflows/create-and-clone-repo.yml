@@ -112,7 +112,7 @@ jobs:
           git add .
           git commit -m "Initial commit"
           git branch -M main
-          git remote add origin https://x-access-token:${{ steps.octo-sts-new.outputs.token }}@github.com/kartverket/${{ env.REPO_NAME }}.git
+          git remote add origin https://x-access-token:${{ steps.github_app.outputs.token }}@github.com/kartverket/${{ env.REPO_NAME }}.git
           git push -u origin main
 
   send_success_message_to_pubsub:
