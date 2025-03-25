@@ -55,14 +55,16 @@ jobs:
           github-token: ${{ steps.github_app.outputs.token }}
           script: |
             const repoName = '${{ env.REPO_NAME }}';
-            const response = await github.rest.repos.createInOrg({
-              org: 'kartverket',
-              name: repoName,
-              description: 'Repo created by DASK workflow',
-              private: true,
-              auto_init: false
+            const response = await github.request('POST /orgs/{org}/repos', {
+                org: 'kartverket',
+                name: repoName,
+                description: 'This is your first repository',
+                visibility: 'internal',
+                headers: {
+                  'X-GitHub-Api-Version': '2022-11-28'
+                }
             });
-            console.log(`Created repo ${repoName}:`, response.status);
+            console.log(`Response for creating repo ${repoName}:`, response);
 
       - name: Set DASK group as admin
         if: env.DEBUG_MODE == 'false'
