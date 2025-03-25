@@ -33,7 +33,6 @@ variable "project_id" {
 
 variable "issuer_uri" {
   description = "The issuer URI for the OICD identity pool provider"
-  default     = "https://test.sky.maskinporten.no"
 }
 
 variable "main_scope" {
