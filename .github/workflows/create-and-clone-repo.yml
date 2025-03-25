@@ -95,13 +95,6 @@ jobs:
           ref: main
           token: ${{ steps.octo-sts-template.outputs.token }}
 
-      - name: Get octo-sts token for the new repo
-        uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f
-        id: octo-sts-new
-        with:
-          scope: kartverket/${{ env.REPO_NAME }}
-          identity: "dask-modules"
-
       - name: Push to a new branch
         if: env.DEBUG_MODE == 'false'
         run: |
