@@ -29,9 +29,8 @@ on:
         default: false
 
 env:
-  GITHUB_TOKEN: ${{ secrets.DASK_ONBOARDING_PAT }}
   DEBUG_MODE: ${{ inputs.debug_mode }}
-  TEAM_NAME: ${{ inputs.team_name }} # Lowercase-name-for-team
+  TEAM_NAME: ${{ inputs.team_name }}
   REPO_NAME: ${{ inputs.project_name }}-data-ingestor
   AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
   SERVICE_ACCOUNT: ${{ inputs.service_account }}
@@ -39,12 +38,21 @@ env:
 jobs:
   create_and_clone_repo:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
+      - name: Generate GitHub App token
+        id: github_app
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ secrets.GH_APP_ID }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
       - name: Create empty repo
         if: env.DEBUG_MODE == 'false'
         uses: actions/github-script@v7
         with:
-          github-token: ${{ env.GITHUB_TOKEN }}
+          github-token: ${{ steps.github_app.outputs.token }}
           script: |
             const repoName = '${{ env.REPO_NAME }}';
             const response = await github.request('POST /orgs/{org}/repos', {
@@ -62,27 +70,32 @@ jobs:
         if: env.DEBUG_MODE == 'false'
         uses: actions/github-script@v7
         with:
-          github-token: ${{ env.GITHUB_TOKEN }}
+          github-token: ${{ steps.github_app.outputs.token }}
           script: |
             const repoName = '${{ env.REPO_NAME }}';
             const teamSlug = 'dask';
-            const response = await github.request('PUT /orgs/{org}/teams/{team_slug}/repos/{owner}/{repo}', {
+            const response = await github.rest.teams.addOrUpdateRepoPermissionsInOrg({
               org: 'kartverket',
               team_slug: teamSlug,
               owner: 'kartverket',
               repo: repoName,
-              permission: 'admin',
-              headers: {
-                'X-GitHub-Api-Version': '2022-11-28'
-              }
+              permission: 'admin'
             });
-            console.log(`Response for adding DASK group as admin on repo ${repoName}:`, response);
+            console.log(`Added DASK team to ${repoName}:`, response.status);
+
+      - name: Get octo-sts token for the template repo
+        uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f
+        id: octo-sts-template
+        with:
+          scope: kartverket/dask-monorepo-reference-setup
+          identity: "dask-modules"
+
       - name: Checkout the reference repository
         uses: actions/checkout@v4
         with:
           repository: kartverket/dask-monorepo-reference-setup
           ref: main
-          token: ${{ env.GITHUB_TOKEN }}
+          token: ${{ steps.octo-sts-template.outputs.token }}
 
       - name: Push to a new branch
         if: env.DEBUG_MODE == 'false'
@@ -94,9 +107,7 @@ jobs:
           git add .
           git commit -m "Initial commit"
           git branch -M main
-          git remote add origin https://x-access-token:${{env.GITHUB_TOKEN}}@github.com/kartverket/${{ env.REPO_NAME }}.git
-          echo "git status: $(git status)"
-          echo "git push"
+          git remote add origin https://x-access-token:${{ steps.github_app.outputs.token }}@github.com/kartverket/${{ env.REPO_NAME }}.git
           git push -u origin main
 
   send_success_message_to_pubsub:

@@ -1,4 +1,4 @@
-name: Create empty GitHub repo and clone monorepo into it
+name: Publish message to PubSub onboarding topic
 
 on:
   workflow_call:
@@ -33,7 +33,6 @@ env:
   PARAMS: ${{ inputs.params }}
   PUBSUB_TOPIC: onboarding_topic
 
-
 jobs:
   publish_message_to_pubsub_onboarding_topic:
     name: Notify task completion to the onboarding PubSub-topic
@@ -53,13 +52,12 @@ jobs:
         with:
           workload_identity_provider: ${{ steps.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
-      
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v2"
         with:
-          version: '>= 363.0.0'
+          version: ">= 363.0.0"
 
       - name: Add message to PubSub topic
         run: |
           gcloud pubsub topics publish ${{ env.PUBSUB_TOPIC }} --message='{ "team_name": "${{ env.TEAM_NAME }}", "step": "${{ env.STEP_ID }}", "params": ${{ env.PARAMS }} }'
-
