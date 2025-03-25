@@ -30,12 +30,6 @@ variable "project_id" {
   description = "The project ID of the project"
 }
 
-
-variable "issuer_uri" {
-  description = "The issuer URI for the OICD identity pool provider"
-  default     = "https://test.sky.maskinporten.no"
-}
-
 variable "main_scope" {
   description = "The main organisation scope for the Maskinporten client."
   default     = "kartverk"
@@ -43,4 +37,14 @@ variable "main_scope" {
 
 variable "sub_scope" {
   description = "The sub scope for the Maskinporten client."
+}
+
+variable "skyporten_env" {
+  description = "The environment to deploy the Skyporten integration in"
+  type        = string
+
+  validation {
+    condition     = contains(["test", "prod"], var.skyporten_env)
+    error_message = "The skyporten_env variable must be either 'test' or 'prod'."
+  }
 }

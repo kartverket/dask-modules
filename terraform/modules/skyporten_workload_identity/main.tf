@@ -16,7 +16,7 @@ resource "google_iam_workload_identity_pool_provider" "maskinporten" {
   description  = "OIDC identity pool provider for Maskinporten"
   oidc {
     allowed_audiences = [var.required_audience]
-    issuer_uri        = var.issuer_uri
+    issuer_uri        = var.skyporten_env == "test" ? "https://test.sky.maskinporten.no" : "https://sky.maskinporten.no"
   }
 }
 
