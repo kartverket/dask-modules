@@ -41,8 +41,10 @@ variable "sub_scope" {
 
 variable "skyporten_env" {
   description = "The environment to deploy the Skyporten integration in"
+  type        = string
+
   validation {
-    condition     = can(regex("^(test|prod)$", var.skyporten_env))
-    error_message = "The skyporten_env variable must be either test or prod"
+    condition     = contains(["test", "prod"], var.skyporten_env)
+    error_message = "The skyporten_env variable must be either 'test' or 'prod'."
   }
 }
