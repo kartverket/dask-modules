@@ -1,5 +1,5 @@
 locals {
-  team_compute_sa = "serviceAccount:databricks-compute@${var.project_id}.iam.gserviceaccount.com"
+  team_compute_sa = "databricks-compute@${var.project_id}.iam.gserviceaccount.com"
 }
 
 resource "google_pubsub_topic" "databricks_topic" {
@@ -21,13 +21,13 @@ resource "google_pubsub_topic_iam_member" "topic_member" {
 }
 
 resource "google_pubsub_subscription_iam_member" "sub_viewer" {
-  member       = local.team_compute_sa
+  member       = "serviceAccount:${local.team_compute_sa}"
   role         = "roles/pubsub.viewer"
   subscription = google_pubsub_subscription.databricks_subscriptino.name
 }
 
 resource "google_pubsub_subscription_iam_member" "sub_consumer" {
-  member       = local.team_compute_sa
+  member       = "serviceAccount:${local.team_compute_sa}"
   role         = "roles/pubsub.subscriber"
   subscription = google_pubsub_subscription.databricks_subscriptino.name
 }
