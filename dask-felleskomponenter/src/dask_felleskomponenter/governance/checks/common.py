@@ -48,20 +48,11 @@ def get_valid_codelist_values(kodeliste_url: str, override_kodeliste_keyword: Op
     valid_values = list(filter(lambda x: x != None, [x.get(kodeliste_entry, None) for x in values_res["containeditems"]]))
     return valid_values
 
-def get_valid_codelist_values_local(kodeliste_path: str, override_kodeliste_keyword: Optional[str] = None) -> List[str]:
-    """
-    Fetches codelist values from local JSON files in the kodelister directory
-    """
-    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'kodelister')
-    full_path = os.path.join(base_dir, kodeliste_path)
-    
+def get_valid_codelist_values_local(kodeliste: dict, override_kodeliste_keyword: Optional[str] = None) -> List[str]:
     kodeliste_entry = "label" if override_kodeliste_keyword is None else override_kodeliste_keyword
     
-    with open(full_path, 'r', encoding='utf-8') as f:
-        values_res = json.load(f)
-    
     valid_values = list(filter(lambda x: x is not None, 
-                             [x.get(kodeliste_entry, None) for x in values_res["containeditems"]]))
+                             [x.get(kodeliste_entry, None) for x in kodeliste["containeditems"]]))
     
     return valid_values
 

@@ -1,4 +1,4 @@
-{
+sikkerhetsnivaa_kodeliste = {
   "ContainedItemsResult": {
     "Count": 2,
     "Offset": 0,
