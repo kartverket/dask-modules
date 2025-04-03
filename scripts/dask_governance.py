@@ -26,10 +26,10 @@ def edit_file(file_path, params):
 
     # Sjekk om teamet allerede finnes
     identifier = f'checks_per_team_{team}'
-    if not is_content_in_file(file_path + "/modules.tf", identifier):
-        append_content_to_end_of_file(file_path + "/modules.tf", module_content)
+    if not is_content_in_file(file_path + "/databricks.tf", identifier):
+        append_content_to_end_of_file(file_path + "/databricks.tf", module_content)
     else:
-        print(f"Module checks_per_team_{team} already exists in modules.tf. Skipping append.")
+        print(f"Module checks_per_team_{team} already exists in databricks.tf. Skipping append.")
 
 
 if __name__ == "__main__":
