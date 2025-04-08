@@ -1,6 +1,7 @@
 from typing import List
-from .common import MetadataError
+from .common import MetadataError, check_codelist_value, TableMetadata, get_valid_codelist_values, check_codelist_value_local, get_valid_codelist_values_local
 from src.dask_felleskomponenter.governance.main import TableMetadata
+from .geometri_encoding_kodeliste import geometri_encoding_kodeliste
 
 def check_romlig_representasjonstype(metadata: TableMetadata, context: List) -> List[MetadataError]:
     kodeliste_url = "https://register.geonorge.no/api/register/romlig-representasjonstype "
@@ -17,7 +18,7 @@ def check_romlig_representasjonstype(metadata: TableMetadata, context: List) -> 
     return context
 
 def check_geometri_encoding(metadata: TableMetadata, context: List) -> List[MetadataError]:
-    kodeliste_url = "geometri_encoding"
+    kodeliste_url = "geometri_encoding_kodeliste"
 
     if metadata.geometri_encoding is None:
         error_obj = MetadataError(catalog=metadata.catalog, 
