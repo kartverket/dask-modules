@@ -88,4 +88,4 @@ def check_codelist_value_local(kodeliste_path: str, value: Any, allowed_values: 
 if __name__ == "__main__":
     # Example usage of both local and remote codelist checking
     check_codelist_value("https://register.geonorge.no/api/register/sikkerhetsniva", "Ugradert", None, None)
-    check_codelist_value_local("access-right.json", "PUBLIC", None, None)
+    check_codelist_value_local("access-right.py", "PUBLIC", None, None)
