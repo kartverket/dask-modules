@@ -16,6 +16,20 @@ def check_romlig_representasjonstype(metadata: TableMetadata, context: List) -> 
     
     return context
 
+def check_geometri_encoding(metadata: TableMetadata, context: List) -> List[MetadataError]:
+    kodeliste_url = "geometri_encoding"
+
+    if metadata.geometri_encoding is None:
+        error_obj = MetadataError(catalog=metadata.catalog, 
+                                     schema=metadata.schema, 
+                                     table=metadata.table, 
+                                     column=None, 
+                                     description="🔴 Feil: 'geometri_encoding' mangler i column properties. Type: <geometri_encoding> - gyldige verdier er WKT, WKB, GeoJson eller S2cell ", 
+                                     solution=f"ALTER TABLE {metadata.catalog}.{metadata.schema}.{metadata.table} SET TBLPROPERTIES ( 'geometri_encoding' = '<<SETT_ROMLIG_REPRESENTASJONSTYPE_HER>>')")
+        context.append(error_obj)
+    
+    return context
+
 # Spør Tom om denne
 """ def check_epsg_koder(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
     kodeliste_url = "https://register.geonorge.no/api/register/epsg-koder"
