@@ -20,6 +20,9 @@ on:
       identity:
         required: true
         type: string
+      manual_deploy_trigger:
+        type: string
+        default: false
     outputs:
       image_url:
         value: ${{ jobs.build.outputs.image_url }}
@@ -30,6 +33,7 @@ env:
   APPS_REPO: ${{ inputs.apps_repo }}
   BRANCH: ${{ github.head_ref || github.ref_name }}
   IDENTITY: ${{ inputs.identity }}
+  MANUAL_DEPLOY_TRIGGER: ${{ inputs.manual_deploy_trigger }}
 
 jobs:
   build:
@@ -52,7 +56,7 @@ jobs:
       - name: Check for changes in context path
         id: check_changes
         run: |
-          if git diff --quiet HEAD^ HEAD -- ${{ env.CONTEXT_PATH }}; then
+          if git diff --quiet HEAD^ HEAD -- ${{ env.CONTEXT_PATH }} && [ "${{ env.MANUAL_DEPLOY_TRIGGER }}" = false ]; then
             echo "No changes in ${{ env.CONTEXT_PATH }}. Skipping build."
             echo "::set-output name=skip_build::true"
           else
