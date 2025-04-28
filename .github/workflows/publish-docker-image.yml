@@ -98,7 +98,7 @@ jobs:
               echo "\"${{ env.REGISTRY }}/${{ github.repository }}@${{ steps.build-docker.outputs.digest }}\"" > $DIRECTORY/${{ inputs.version_file_name }} 
           }
 
-          if [[ "${{ env.BRANCH }}" == "main" ]]; then
+          if [[ "${{ env.BRANCH }}" == "main" ]] || [[ "${{env.MANUAL_DEPLOY_TRIGGER}}" == "true" ]]; then
               setup_directory 
           fi
 
