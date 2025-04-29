@@ -5,6 +5,7 @@ import json
 
 import requests
 
+
 @dataclass(init=False)
 class TableMetadata:
     catalog: Optional[str] = field(default=None)
@@ -19,7 +20,8 @@ class TableMetadata:
     epsg_koder: Optional[str] = field(default=None)
     begrep: Optional[str] = field(default=None)
     sikkerhetsnivaa: Optional[str] = field(default=None)
-
+    
+    column_properties: Dict[str, dict] = field(default_factory=dict)
     optional_params: Dict[str, Any] = field(default_factory=dict)
 
     def __init__(self, **kwargs):

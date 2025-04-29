@@ -2,6 +2,7 @@ from typing import List, Optional
 from .common import MetadataError, check_codelist_value, TableMetadata, get_valid_codelist_values, check_codelist_value_local, get_valid_codelist_values_local
 from .sikkerhetsnivaa_kodeliste import sikkerhetsnivaa_kodeliste
 from .tilgangsnivaa_kodeliste import tilgangsnivaa_kodeliste
+from .column import check_geometri_encoding
 
 def _generate_metadata_error(catalog: str, schema: str, table: str, field: str, type: str, is_missing: bool, valid_values_description: Optional[str] = None, valid_values: str | List[str] = "string"):
     error_reason = "mangler" if is_missing else "er ugyldig"
@@ -74,7 +75,7 @@ def check_begrep(metadata: TableMetadata, context: List[MetadataError]) -> List[
 checks_for_valor = {
     "bronze": [check_beskrivelse, check_sikkerhetsnivaa],
     "silver":   [check_tittel, check_beskrivelse, check_hovedkategori, check_emneord, check_tilgangsnivaa, check_sikkerhetsnivaa],
-    "gold":   [check_tittel, check_beskrivelse, check_hovedkategori, check_emneord, check_begrep, check_tilgangsnivaa, check_sikkerhetsnivaa],
+    "gold":   [check_tittel, check_beskrivelse, check_hovedkategori, check_emneord, check_begrep, check_tilgangsnivaa, check_sikkerhetsnivaa, check_geometri_encoding],
 }
 
 
