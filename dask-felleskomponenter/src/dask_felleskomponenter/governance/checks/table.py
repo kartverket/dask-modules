@@ -73,8 +73,8 @@ def check_begrep(metadata: TableMetadata, context: List[MetadataError]) -> List[
     return context
     
 checks_for_valor = {
-    "bronze": [check_beskrivelse, check_sikkerhetsnivaa],
-    "silver":   [check_tittel, check_beskrivelse, check_hovedkategori, check_emneord, check_tilgangsnivaa, check_sikkerhetsnivaa],
+    "bronze": [check_tittel, check_beskrivelse, check_sikkerhetsnivaa],
+    "silver":   [check_tittel, check_beskrivelse, check_emneord, check_begrep, check_sikkerhetsnivaa],
     "gold":   [check_tittel, check_beskrivelse, check_hovedkategori, check_emneord, check_begrep, check_tilgangsnivaa, check_sikkerhetsnivaa, check_geometri_encoding],
 }
 
