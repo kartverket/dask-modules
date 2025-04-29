@@ -5,6 +5,7 @@ import json
 
 import requests
 
+
 @dataclass(init=False)
 class TableMetadata:
     catalog: Optional[str] = field(default=None)
@@ -19,7 +20,8 @@ class TableMetadata:
     epsg_koder: Optional[str] = field(default=None)
     begrep: Optional[str] = field(default=None)
     sikkerhetsnivaa: Optional[str] = field(default=None)
-
+    
+    column_properties: Dict[str, dict] = field(default_factory=dict)
     optional_params: Dict[str, Any] = field(default_factory=dict)
 
     def __init__(self, **kwargs):
@@ -88,4 +90,4 @@ def check_codelist_value_local(kodeliste_path: str, value: Any, allowed_values: 
 if __name__ == "__main__":
     # Example usage of both local and remote codelist checking
     check_codelist_value("https://register.geonorge.no/api/register/sikkerhetsniva", "Ugradert", None, None)
-    check_codelist_value_local("access-right.json", "PUBLIC", None, None)
+    check_codelist_value_local("access-right.py", "PUBLIC", None, None)

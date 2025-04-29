@@ -10,5 +10,11 @@
     "begrep": "Landskap",
     "epsg_koder": "25835",
     "emneord": "bruksomraade",
-    "sikkerhetsnivaa": "Ugradert"
+    "sikkerhetsnivaa": "Ugradert",
+    "column_properties": {
+        "geometri": {
+            "epsg": "25835",
+            "geometri_encoding": "wkt"
+        }
+    }
 }
