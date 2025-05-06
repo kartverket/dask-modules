@@ -11,6 +11,18 @@ class CodelistUrls:
     hovedkategori = "https://register.geonorge.no/metadata-kodelister/tematisk-hovedkategori"
     begrep = "https://register.geonorge.no/metadata-kodelister/nasjonal-temainndeling"
 
+@dataclass
+class CodelistEntry:
+    id: str
+    label: str
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return other == self.id
+        if not isinstance(other, CodelistEntry):
+            return False
+        return self.id == other.id
+
 @dataclass(init=False)
 class TableMetadata:
     catalog: Optional[str] = field(default=None)
@@ -49,21 +61,23 @@ class MetadataError:
     for_field: str
     valid_values: str | List[str]
 
-def get_valid_codelist_values(kodeliste_url: str, override_kodeliste_keyword: Optional[str] = None) -> List[str]:
+def get_valid_codelist_values(kodeliste_url: str, override_kodeliste_keyword: Optional[str] = None, override_kodeliste_label_keyword: Optional[str] = None) -> List[CodelistEntry]:
     kodeliste_entry = "id" if override_kodeliste_keyword == None else override_kodeliste_keyword
+    kodeliste_label_entry = "label" if override_kodeliste_label_keyword == None else override_kodeliste_label_keyword
     values_res = requests.get(kodeliste_url, headers={ "Accept": "application/json" }).json()
-    valid_values = list(filter(lambda x: x != None, [x.get(kodeliste_entry, None) for x in values_res["containeditems"]]))
+    valid_values = list(filter(lambda x: x != None, [CodelistEntry(x.get(kodeliste_entry, None), x.get(kodeliste_label_entry, None)) for x in values_res["containeditems"]]))
     return valid_values
 
-def get_valid_codelist_values_local(kodeliste: dict, override_kodeliste_keyword: Optional[str] = None) -> List[str]:
-    kodeliste_entry = "id" if override_kodeliste_keyword is None else override_kodeliste_keyword
+def get_valid_codelist_values_local(kodeliste: dict, override_kodeliste_keyword: Optional[str] = None, override_kodeliste_label_keyword: Optional[str] = None) -> List[str]:
+    kodeliste_entry = "id" if override_kodeliste_keyword == None else override_kodeliste_keyword
+    kodeliste_label_entry = "label" if override_kodeliste_label_keyword == None else override_kodeliste_label_keyword
     
     valid_values = list(filter(lambda x: x is not None, 
-                             [x.get(kodeliste_entry, None) for x in kodeliste["containeditems"]]))
+                             [CodelistEntry(x.get(kodeliste_entry, None), x.get(kodeliste_label_entry, None)) for x in kodeliste["containeditems"]]))
     
     return valid_values
 
-def check_codelist_value(kodeliste_url: Optional[str], value: Any, allowed_values: Optional[List[Any]] = None, override_kodeliste_keyword: Optional[str] = None) -> bool:
+def check_codelist_value(kodeliste_url: Optional[str], value: Optional[str], allowed_values: Optional[List[CodelistEntry]] = None, override_kodeliste_keyword: Optional[str] = None) -> bool:
     if value == None:
         return False
 
@@ -76,7 +90,7 @@ def check_codelist_value(kodeliste_url: Optional[str], value: Any, allowed_value
     valid_values = get_valid_codelist_values(kodeliste_url, override_kodeliste_keyword)
     return value in valid_values
 
-def check_codelist_value_local(kodeliste_path: str, value: Any, allowed_values: Optional[List[Any]] = None, override_kodeliste_keyword: Optional[str] = None) -> bool:
+def check_codelist_value_local(kodeliste_path: str, value: Optional[str], allowed_values: Optional[List[CodelistEntry]] = None, override_kodeliste_keyword: Optional[str] = None) -> bool:
     """
     Checks if a value exists in a local codelist
     """
