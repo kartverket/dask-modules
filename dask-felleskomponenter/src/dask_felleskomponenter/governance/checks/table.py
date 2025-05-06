@@ -1,5 +1,5 @@
 from typing import List, Optional
-from .common import MetadataError, check_codelist_value, TableMetadata, get_valid_codelist_values, check_codelist_value_local, get_valid_codelist_values_local
+from .common import MetadataError, check_codelist_value, TableMetadata, get_valid_codelist_values, check_codelist_value_local, get_valid_codelist_values_local, CodelistUrls, medaljongnivaa_kodeliste
 from .sikkerhetsnivaa_kodeliste import sikkerhetsnivaa_kodeliste
 from .tilgangsnivaa_kodeliste import tilgangsnivaa_kodeliste
 from .column import check_geometri_encoding
@@ -35,14 +35,14 @@ def check_tilgangsnivaa(metadata: TableMetadata, context: List[MetadataError]) -
     return context
 
 def check_medaljongnivaa(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
-    valid_values = ["bronze", "silver", "gold"]
+    valid_values = medaljongnivaa_kodeliste
     if not check_codelist_value(None, metadata.medaljongnivaa, valid_values):
         context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "medaljongnivaa", "valør", metadata.medaljongnivaa == None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
     
     return context
 
 def check_hovedkategori(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
-    kodeliste_url = "https://register.geonorge.no/metadata-kodelister/tematisk-hovedkategori"
+    kodeliste_url = CodelistUrls.hovedkategori
 
     if not check_codelist_value(kodeliste_url, metadata.hovedkategori):
         valid_values = get_valid_codelist_values(kodeliste_url)
@@ -64,7 +64,7 @@ def check_sikkerhetsnivaa(metadata: TableMetadata, context: List[MetadataError])
     return context
 
 def check_begrep(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
-    kodeliste_url = "https://register.geonorge.no/metadata-kodelister/nasjonal-temainndeling"
+    kodeliste_url = CodelistUrls.begrep
 
     if not check_codelist_value(kodeliste_url, metadata.begrep):
         valid_values = get_valid_codelist_values(kodeliste_url)
@@ -74,7 +74,7 @@ def check_begrep(metadata: TableMetadata, context: List[MetadataError]) -> List[
     
 checks_for_valor = {
     "bronze": [check_tittel, check_beskrivelse, check_sikkerhetsnivaa],
-    "silver":   [check_tittel, check_beskrivelse, check_emneord, check_begrep, check_sikkerhetsnivaa],
+    "silver": [check_tittel, check_beskrivelse, check_emneord, check_begrep, check_sikkerhetsnivaa],
     "gold":   [check_tittel, check_beskrivelse, check_hovedkategori, check_emneord, check_begrep, check_tilgangsnivaa, check_sikkerhetsnivaa, check_geometri_encoding],
 }
 

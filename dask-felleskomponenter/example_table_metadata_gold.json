@@ -4,13 +4,13 @@
     "table": "table",
     "tittel": "tittel",
     "beskrivelse": "beskrivelse",
-    "tilgangsnivaa": "Allmen tilgang",
+    "tilgangsnivaa": "http://publications.europa.eu/resource/authority/access-right/PUBLIC",
     "medaljongnivaa": "gold",
-    "hovedkategori": "Basisdata",
-    "begrep": "Landskap",
+    "hovedkategori": "https://register.geonorge.no/metadata-kodelister/tematisk-hovedkategori/farming",
+    "begrep": "https://register.geonorge.no/metadata-kodelister/nasjonal-temainndeling/Samfunnssikkerhet",
     "epsg_koder": "25835",
     "emneord": "bruksomraade",
-    "sikkerhetsnivaa": "Ugradert",
+    "sikkerhetsnivaa": "https://register.geonorge.no/metadata-kodelister/sikkerhetsnivaa/unclassified_sensitive",
     "column_properties": {
         "geometri": {
             "epsg": "25835",
