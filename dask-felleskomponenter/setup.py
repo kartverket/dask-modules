@@ -7,7 +7,7 @@ packages = setuptools.find_packages(where="src")
 
 setuptools.setup(
     name="dask-felleskomponenter",
-    version="0.1.0",
+    version="0.1.1",
     author="Dataplattform@Statens Kartverk",
     author_email="dataplattform@kartverket.no",
     description="Felleskomponenter på DASK",
