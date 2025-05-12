@@ -59,7 +59,7 @@ class MetadataError:
     description: str
     solution: Optional[str]
     for_field: str
-    valid_values: str | List[str]
+    valid_values: str | List[CodelistEntry]
 
 def get_valid_codelist_values(kodeliste_url: str, override_kodeliste_keyword: Optional[str] = None, override_kodeliste_label_keyword: Optional[str] = None) -> List[CodelistEntry]:
     kodeliste_entry = "id" if override_kodeliste_keyword == None else override_kodeliste_keyword
