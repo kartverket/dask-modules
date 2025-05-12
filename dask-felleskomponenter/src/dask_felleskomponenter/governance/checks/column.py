@@ -16,7 +16,9 @@ def check_geometri_encoding(metadata: TableMetadata, context: List) -> List[Meta
             error_obj = MetadataError(catalog=metadata.catalog, 
                                         schema=metadata.schema, 
                                         table=metadata.table, 
-                                        column=key, 
+                                        column=key,
+                                        for_field="geometri_encoding",
+                                        valid_values=valid_geometri_encoding,
                                         description="🔴 Feil: 'geometri_encoding' mangler i column properties. Type: <geometri_encoding> - gyldige verdier er WKT, WKB, GeoJson eller S2cell ", 
                                         solution=f"ALTER TABLE {metadata.catalog}.{metadata.schema}.{metadata.table} SET TBLPROPERTIES ( 'columns.{key}.geometri_encoding' = '<<SETT_ROMLIG_REPRESENTASJONSTYPE_HER>>')")
             context.append(error_obj)
