@@ -62,14 +62,14 @@ class MetadataError:
     valid_values: str | List[CodelistEntry]
 
 def get_valid_codelist_values(kodeliste_url: str, override_kodeliste_keyword: Optional[str] = None, override_kodeliste_label_keyword: Optional[str] = None) -> List[CodelistEntry]:
-    kodeliste_entry = "id" if override_kodeliste_keyword == None else override_kodeliste_keyword
+    kodeliste_entry = "codevalue" if override_kodeliste_keyword == None else override_kodeliste_keyword
     kodeliste_label_entry = "label" if override_kodeliste_label_keyword == None else override_kodeliste_label_keyword
     values_res = requests.get(kodeliste_url, headers={ "Accept": "application/json" }).json()
     valid_values = list(filter(lambda x: x != None, [CodelistEntry(x.get(kodeliste_entry, None), x.get(kodeliste_label_entry, None)) for x in values_res["containeditems"]]))
     return valid_values
 
 def get_valid_codelist_values_local(kodeliste: dict, override_kodeliste_keyword: Optional[str] = None, override_kodeliste_label_keyword: Optional[str] = None) -> List[str]:
-    kodeliste_entry = "id" if override_kodeliste_keyword == None else override_kodeliste_keyword
+    kodeliste_entry = "codevalue" if override_kodeliste_keyword == None else override_kodeliste_keyword
     kodeliste_label_entry = "label" if override_kodeliste_label_keyword == None else override_kodeliste_label_keyword
     
     valid_values = list(filter(lambda x: x is not None, 
