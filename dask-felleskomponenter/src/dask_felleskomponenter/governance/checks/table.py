@@ -90,11 +90,11 @@ def validate_table(metadata: TableMetadata) -> List[MetadataError]:
 
     return validation_context
 
-def get_mandatory_metadata_for_medaljongnivaa(medaljongnivaa: str):
+def get_mandatory_metadata_for_medaljongnivaa(medaljongnivaa: str, column_properties: Optional[dict] = {}) -> dict:
     metadata_dict = { }
     
     for check in checks_for_valor[medaljongnivaa]:
-        metadata_error = check(TableMetadata(), [])[0]
+        metadata_error = check(TableMetadata(column_properties=column_properties), [])[0]
         metadata_dict[metadata_error.for_field] = metadata_error
 
     return metadata_dict

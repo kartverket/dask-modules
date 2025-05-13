@@ -6,7 +6,7 @@ valid_geometri_encoding = [val["codevalue"].lower() for val in geometri_encoding
 
 def check_geometri_encoding(metadata: TableMetadata, context: List) -> List[MetadataError]:
     if metadata.column_properties is None:
-        return
+        return context
 
     for key, val in metadata.column_properties.items():
         epsg = val.get("epsg", None)
