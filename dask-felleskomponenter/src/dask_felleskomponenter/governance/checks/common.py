@@ -62,14 +62,14 @@ class MetadataError:
     valid_values: str | List[CodelistEntry]
 
 def get_valid_codelist_values(kodeliste_url: str, override_kodeliste_keyword: Optional[str] = None, override_kodeliste_label_keyword: Optional[str] = None) -> List[CodelistEntry]:
-    kodeliste_entry = "id" if override_kodeliste_keyword == None else override_kodeliste_keyword
+    kodeliste_entry = "codevalue" if override_kodeliste_keyword == None else override_kodeliste_keyword
     kodeliste_label_entry = "label" if override_kodeliste_label_keyword == None else override_kodeliste_label_keyword
     values_res = requests.get(kodeliste_url, headers={ "Accept": "application/json" }).json()
     valid_values = list(filter(lambda x: x != None, [CodelistEntry(x.get(kodeliste_entry, None), x.get(kodeliste_label_entry, None)) for x in values_res["containeditems"]]))
     return valid_values
 
-def get_valid_codelist_values_local(kodeliste: dict, override_kodeliste_keyword: Optional[str] = None, override_kodeliste_label_keyword: Optional[str] = None) -> List[str]:
-    kodeliste_entry = "id" if override_kodeliste_keyword == None else override_kodeliste_keyword
+def get_valid_codelist_values_local(kodeliste: dict, override_kodeliste_keyword: Optional[str] = None, override_kodeliste_label_keyword: Optional[str] = None) -> List[CodelistEntry]:
+    kodeliste_entry = "codevalue" if override_kodeliste_keyword == None else override_kodeliste_keyword
     kodeliste_label_entry = "label" if override_kodeliste_label_keyword == None else override_kodeliste_label_keyword
     
     valid_values = list(filter(lambda x: x is not None, 
@@ -87,7 +87,7 @@ def check_codelist_value(kodeliste_url: Optional[str], value: Optional[str], all
     if kodeliste_url == None:
         return value != None
 
-    valid_values = get_valid_codelist_values(kodeliste_url, override_kodeliste_keyword)
+    valid_values = [x.id for x in get_valid_codelist_values(kodeliste_url, override_kodeliste_keyword)]
     return value in valid_values
 
 def check_codelist_value_local(kodeliste_path: str, value: Optional[str], allowed_values: Optional[List[CodelistEntry]] = None, override_kodeliste_keyword: Optional[str] = None) -> bool:
@@ -103,7 +103,7 @@ def check_codelist_value_local(kodeliste_path: str, value: Optional[str], allowe
     if kodeliste_path is None:
         return value is not None
 
-    valid_values = get_valid_codelist_values_local(kodeliste_path, override_kodeliste_keyword)
+    valid_values = [x.id for x in get_valid_codelist_values_local(kodeliste_path, override_kodeliste_keyword)]
     return value in valid_values
 
 def get_codelist(key: str) -> List[str]:

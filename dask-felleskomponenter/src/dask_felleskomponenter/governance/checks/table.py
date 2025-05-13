@@ -29,7 +29,7 @@ def check_beskrivelse(metadata: TableMetadata, context: List[MetadataError]) -> 
 
 def check_tilgangsnivaa(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
     if not check_codelist_value_local(tilgangsnivaa_kodeliste, metadata.tilgangsnivaa):
-        valid_values = get_valid_codelist_values_local(tilgangsnivaa_kodeliste)
+        valid_values = [x.id for x in get_valid_codelist_values_local(tilgangsnivaa_kodeliste)]
         context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "tilgangsnivaa", "tilgangsrestriksjoner", metadata.tilgangsnivaa is None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
     
     return context
@@ -45,7 +45,7 @@ def check_hovedkategori(metadata: TableMetadata, context: List[MetadataError]) -
     kodeliste_url = CodelistUrls.hovedkategori
 
     if not check_codelist_value(kodeliste_url, metadata.hovedkategori):
-        valid_values = get_valid_codelist_values(kodeliste_url)
+        valid_values = [x.id for x in get_valid_codelist_values(kodeliste_url)]
         context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "hovedkategori", "tematisk-hovedkategori", metadata.hovedkategori == None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
     
     return context
@@ -58,7 +58,7 @@ def check_emneord(metadata: TableMetadata, context: List[MetadataError]) -> List
 
 def check_sikkerhetsnivaa(metadata: TableMetadata, context: List[MetadataError]) -> List[MetadataError]:
     if not check_codelist_value_local(sikkerhetsnivaa_kodeliste, metadata.sikkerhetsnivaa):
-        valid_values = get_valid_codelist_values_local(sikkerhetsnivaa_kodeliste)
+        valid_values = [x.id for x in get_valid_codelist_values_local(sikkerhetsnivaa_kodeliste)]
         context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "sikkerhetsnivaa", "sikkerhetsniva", metadata.sikkerhetsnivaa is None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
     
     return context
@@ -67,7 +67,7 @@ def check_begrep(metadata: TableMetadata, context: List[MetadataError]) -> List[
     kodeliste_url = CodelistUrls.begrep
 
     if not check_codelist_value(kodeliste_url, metadata.begrep):
-        valid_values = get_valid_codelist_values(kodeliste_url)
+        valid_values = [x.id for x in get_valid_codelist_values(kodeliste_url)]
         context.append(_generate_metadata_error(metadata.catalog, metadata.schema, metadata.table, "begrep", "nasjonal-temainndeling", metadata.begrep == None, f"gyldige verdier: {valid_values}", valid_values=valid_values))
     
     return context
