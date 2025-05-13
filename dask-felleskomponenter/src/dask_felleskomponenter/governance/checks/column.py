@@ -5,6 +5,9 @@ from .geometri_encoding_kodeliste import geometri_encoding_kodeliste
 valid_geometri_encoding = [val["codevalue"].lower() for val in geometri_encoding_kodeliste["containeditems"]]
 
 def check_geometri_encoding(metadata: TableMetadata, context: List) -> List[MetadataError]:
+    if metadata.column_properties is None:
+        return
+
     for key, val in metadata.column_properties.items():
         epsg = val.get("epsg", None)
         geometry_encoding = val.get("geometri_encoding", "")
