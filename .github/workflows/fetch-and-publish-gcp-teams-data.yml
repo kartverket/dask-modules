@@ -26,8 +26,8 @@ jobs:
   fetch-teams-from-gcp:
     runs-on: ubuntu-latest
     steps:
-      - name: Heisann
-        id: heisann
+      - name: wif-check
+        id: wif-check
         run: |
           echo wif: ${{ needs.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
 
