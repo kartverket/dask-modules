@@ -7,34 +7,21 @@ env:
   AUTH_PROJECT_NUMBER: 149356773285
   PROJECT_ID: dataplattform-prod-9b1d
   SERVICE_ACCOUNT: dataplattform-deploy@dataplattform-prod-9b1d.iam.gserviceaccount.com
+  WORKLOAD_IDENTITY_PROVIDER: projects/${AUTH_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${$SERVICE_ACCOUNT//-deploy.*/}-deploy-pool/providers/github-provider
 
 jobs:
-  setup-env:
-    runs-on: ubuntu-latest
-    outputs:
-      workload_identity_provider: ${{ steps.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
-    steps:
-      - name: Set vars
-        id: set-output
-        run: |
-          PRODUCT_NAME="${SERVICE_ACCOUNT//-deploy.*/}"
-          DEFAULT_WORKLOAD_IDENTITY=projects/"${AUTH_PROJECT_NUMBER}"/locations/global/workloadIdentityPools/"${PRODUCT_NAME}"-deploy-pool/providers/github-provider
-          PROVIDER="${DEFAULT_WORKLOAD_IDENTITY}"
-          
-          echo "WORKLOAD_IDENTITY_PROVIDER=$PROVIDER" >> $GITHUB_OUTPUT
-
   fetch-teams-from-gcp:
     runs-on: ubuntu-latest
     steps:
       - name: wif-check
         id: wif-check
         run: |
-          echo wif: ${{ needs.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
+          echo wif: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
 
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: ${{ needs.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
           project_id: ${{ env.PROJECT_ID }}
 
