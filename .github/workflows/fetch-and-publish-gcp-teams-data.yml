@@ -35,10 +35,10 @@ jobs:
       - name: Set vars
         id: set-output
         run: |
-          PRODUCT_NAME=$(echo $SERVICE_ACCOUNT | sed 's/-deploy.*//')
-          DEFAULT_WORKLOAD_IDENTITY="projects/$AUTH_PROJECT_NUMBER/locations/global/workloadIdentityPools/$PRODUCT_NAME-deploy-pool/providers/github-provider"
-          OVERRIDE=$WORKLOAD_IDENTITY_PROVIDER_OVERRIDE
-          PROVIDER=${OVERRIDE:-$DEFAULT_WORKLOAD_IDENTITY}
+          PRODUCT_NAME="${SERVICE_ACCOUNT//-deploy.*/}"
+          DEFAULT_WORKLOAD_IDENTITY=projects/"${AUTH_PROJECT_NUMBER}"/locations/global/workloadIdentityPools/"${PRODUCT_NAME}"-deploy-pool/providers/github-provider
+          OVERRIDE="$WORKLOAD_IDENTITY_PROVIDER_OVERRIDE"
+          PROVIDER="${OVERRIDE:-$DEFAULT_WORKLOAD_IDENTITY}"
           
           echo "WORKLOAD_IDENTITY_PROVIDER=$PROVIDER" >> $GITHUB_OUTPUT
 
@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
