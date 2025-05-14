@@ -13,17 +13,19 @@ jobs:
   fetch-teams-from-gcp:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: wif-check
         id: wif-check
         run: |
-          echo wif: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          echo wif: ${{ needs.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
 
       - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          workload_identity_provider: ${{ needs.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
-          project_id: ${{ env.PROJECT_ID }}
 
       - name: Heisann
         id: heisann
