@@ -1,0 +1,17 @@
+name: Fetch and Publish Product Team Data From GCP
+
+on:
+  workflow_call:
+    inputs:
+      token:
+        description: "GCP token"
+        required: true
+        type: string
+
+jobs:
+  fetch-teams-from-gcp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Heisann
+        id: heisann
+        run: echo "heisann!"
