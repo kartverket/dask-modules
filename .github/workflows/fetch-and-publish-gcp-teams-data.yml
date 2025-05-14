@@ -19,12 +19,12 @@ jobs:
       - name: wif-check
         id: wif-check
         run: |
-          echo wif: ${{ needs.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
+          echo wif: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
 
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v1
         with:
-          workload_identity_provider: ${{ needs.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
 
       - name: Heisann
