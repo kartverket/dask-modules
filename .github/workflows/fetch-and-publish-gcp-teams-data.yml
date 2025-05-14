@@ -26,6 +26,11 @@ jobs:
   fetch-teams-from-gcp:
     runs-on: ubuntu-latest
     steps:
+      - name: Heisann
+        id: heisann
+        run: |
+          echo wif: ${{ needs.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
+
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v1
         with:
