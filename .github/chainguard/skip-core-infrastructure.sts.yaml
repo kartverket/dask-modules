@@ -3,3 +3,5 @@ subject_pattern: '^repo:kartverket\/skip-core-infrastructure:ref:refs\/main\/.+$
 
 permissions:
   contents: read
+  actions: write
+  workflows: write
