@@ -7,7 +7,7 @@ env:
   AUTH_PROJECT_NUMBER: 149356773285
   PROJECT_ID: dataplattform-prod-9b1d
   SERVICE_ACCOUNT: dataplattform-deploy@dataplattform-prod-9b1d.iam.gserviceaccount.com
-  WORKLOAD_IDENTITY_PROVIDER: projects/${AUTH_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${$SERVICE_ACCOUNT//-deploy.*/}-deploy-pool/providers/github-provider
+  WORKLOAD_IDENTITY_PROVIDER: projects/${AUTH_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${SERVICE_ACCOUNT//-deploy.*/}-deploy-pool/providers/github-provider
 
 jobs:
   fetch-teams-from-gcp:
