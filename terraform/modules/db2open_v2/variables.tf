@@ -4,13 +4,13 @@ variable "recipient" {
 
 variable "schema_name_ext" {
   type        = string
-  description = "The schema name to share."
+  description = "The schema name to share. Should be in the format <catalog_name>.<schema_name>."
 }
 
 variable "tables_to_share" {
-  type        = list(string)
+  type        = set(string)
   default     = []
-  description = "List of tables to share"
+  description = "Set of tables to share."
 }
 
 variable "share_name" {
