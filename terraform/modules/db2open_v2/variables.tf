@@ -4,7 +4,7 @@ variable "recipient" {
 
 variable "schema_name_ext" {
   type        = string
-  description = "The schema name to share."
+  description = "The schema name to share. Should be in the format <catalog_name>.<schema_name>."
 }
 
 variable "tables_to_share" {
@@ -50,5 +50,5 @@ variable "scheduler_service_account_email" {
 variable "cron_schedule" {
   description = "Cron schedule for the Cloud Scheduler job"
   type        = string
-  default     = "59 24 * * *"
+  default     = "59 0 * * *"
 }
