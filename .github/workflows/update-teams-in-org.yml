@@ -1,0 +1,25 @@
+on:
+  repository_dispatch:
+    types: [update_submodules]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  teams-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f
+        id: octo-sts
+        with:
+          scope: kartverket
+          identity: kartverket_repos
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          token: ${{ steps.octo-sts.outputs.token }}
