@@ -2,6 +2,4 @@ issuer: https://token.actions.githubusercontent.com
 subject_pattern: repo:kartverket/entra-id-config:ref:refs/heads/main
 
 permissions:
-  contents: read
-  actions: write
-  workflows: write
+  contents: write
