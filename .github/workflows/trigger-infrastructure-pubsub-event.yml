@@ -21,9 +21,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-          token: ${{ steps.octo-sts.outputs.token }}
 
       - name: Publish message
         uses: ./.github/workflows/publish-pubsub-message.yml
