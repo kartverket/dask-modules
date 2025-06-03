@@ -37,6 +37,9 @@ jobs:
     name: Notify task completion to the onboarding PubSub-topic
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Publish message
         uses: ./.github/workflows/publish-pubsub-message.yml
         with:
