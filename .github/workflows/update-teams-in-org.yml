@@ -2,16 +2,13 @@ on:
   repository_dispatch:
     types: [ update_submodules ]
   workflow_dispatch:
-    inputs:
-      event_source:
-        type: string
-        required: true
-        description: Event source to publish to queue
-        default: entra-id-config
 
 permissions:
   contents: read
   id-token: write
+
+env:
+  EVENT_SOURCE: entra-id-config
 
 jobs:
   publish_team_change_message:
@@ -21,4 +18,4 @@ jobs:
       - name: Trigger Infrastructure Change
         uses: ./.github/workflows/trigger-infrastructure-pubsub-event.yml
         with:
-          event_source: ${{ inputs.event_source }}
+          event_source: ${{ env.EVENT_SOURCE }}
