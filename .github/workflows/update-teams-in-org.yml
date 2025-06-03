@@ -1,3 +1,5 @@
+name: Publish Entra ID Config Change Event
+
 on:
   repository_dispatch:
     types: [ update_submodules ]
