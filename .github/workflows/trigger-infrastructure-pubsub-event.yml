@@ -26,6 +26,6 @@ jobs:
         uses: ./.github/workflows/publish-pubsub-message.yml
         with:
           service_account: dataplattform-deploy@${{ env.PROJECT_ID }}.iam.gserviceaccount.com
-          auth_project_number: env.AUTH_PROJECT_NUMBER
+          auth_project_number: ${{ env.AUTH_PROJECT_NUMBER }}
           pubsub_topic: onboarding_organization_topic
           pubsub_message: '{ "event_source": "${{ env.EVENT_SOURCE }}" }'
