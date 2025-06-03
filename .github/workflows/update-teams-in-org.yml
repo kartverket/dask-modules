@@ -1,25 +1,21 @@
 on:
   repository_dispatch:
-    types: [update_submodules]
+    types: [ update_submodules ]
   workflow_dispatch:
 
 permissions:
   contents: read
   id-token: write
 
+env:
+  EVENT_SOURCE: entra-id-config
+
 jobs:
-  teams-sync:
+  publish_team_change_message:
+    name: Publish Team Change Message
     runs-on: ubuntu-latest
-
     steps:
-      - uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f
-        id: octo-sts
+      - name: Trigger Infrastructure Change
+        uses: ./.github/workflows/trigger-infrastructure-pubsub-event.yml
         with:
-          scope: kartverket
-          identity: kartverket_repos
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-          token: ${{ steps.octo-sts.outputs.token }}
+          event_source: ${{ env.EVENT_SOURCE }}

@@ -112,7 +112,7 @@ jobs:
 
   send_success_message_to_pubsub:
     needs: create_and_clone_repo
-    uses: ./.github/workflows/publish-message-pubsub.yml
+    uses: ./.github/workflows/publish-onboarding-message.yml
     permissions:
       id-token: write
     with:
