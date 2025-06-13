@@ -12,8 +12,9 @@ resource "google_iam_workload_identity_pool_provider" "maskinporten" {
     "google.subject"              = "assertion.consumer.ID"
     "attribute.clientaccess"      = "\"client::\" + assertion.consumer.ID + \"::\" + assertion.scope"
   }
-  display_name = var.workload_identity_pool_display_name
-  description  = "OIDC identity pool provider for Maskinporten"
+  attribute_condition = var.attribute_condition == "" ? null : var.attribute_condition
+  display_name        = var.workload_identity_pool_display_name
+  description         = "OIDC identity pool provider for Maskinporten"
   oidc {
     allowed_audiences = [var.required_audience]
     issuer_uri        = var.skyporten_env == "test" ? "https://test.sky.maskinporten.no" : "https://sky.maskinporten.no"

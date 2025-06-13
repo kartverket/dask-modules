@@ -48,3 +48,10 @@ variable "skyporten_env" {
     error_message = "The skyporten_env variable must be either 'test' or 'prod'."
   }
 }
+
+variable "attribute_condition" {
+  description = "The attribute condition for the OICD identity pool provider. If not set, no condition will be applied."
+  type        = string
+  default     = ""
+
+}
