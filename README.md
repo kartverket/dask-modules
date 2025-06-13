@@ -1,5 +1,5 @@
 # dask-modules
-This repository includes Terraform modules and the PyPI package dask-felleskomponenter, both maintained by DASK. The Terraform modules are used to provision infrastructure for teams being onboarded to the data platform. The Python library contains functions designed to simplify the development of data products within Databricks notebooks. You can read more about this [here](https://github.com/kartverket/dask-modules/blob/main/dask-felleskomponenter/README.md).
+This repository contains Terraform modules maintained by DASK. The Terraform modules are used to provision infrastructure for teams being onboarded to the data platform.
 
 
 ### How to use the modules from other repos

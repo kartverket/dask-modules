@@ -1,7 +1,3 @@
-variable "org_number" {
-  description = "The organization number that should be allowed to access the Skyporten integration"
-}
-
 variable "region" {
   description = "The region to deploy the resources in"
 }
@@ -20,10 +16,6 @@ variable "project_number" {
 
 variable "project_id" {
   description = "The project ID of the project"
-}
-
-variable "consumer_name" {
-  description = "The name of the consumer (organization)"
 }
 
 variable "main_scope" {
