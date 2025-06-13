@@ -3,6 +3,8 @@ name: Pull Request Actions
 on:
   pull_request:
     types: [opened, synchronize]
+  push:
+    branches: [main]
 
 jobs:
   pharos-scan:
