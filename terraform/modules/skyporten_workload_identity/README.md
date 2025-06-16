@@ -1,9 +1,9 @@
 # skyporten_workload_identity
 
 
-Denne mappen inneholder en Terraform-modul som har som mål å dele tilgang til gcp-bøtter ved autentifisering igjennom skyporten.
+Denne mappen inneholder en Terraform-modul som har som mål å dele tilgang til gcp-bøtter ved autentisering igjennom skyporten.
 
-Modulen setter opp workload identity federation for Oauth2/OIDC-integrasjon mot Skyporten. Det lages en workload identity pool, og poolen settes til å stole på skyporten.
+Modulen setter opp workload identity federation for Oauth2/OIDC-integrasjon mot skyporten. Det lages en workload identity pool, og poolen settes til å stole på skyporten.
 Les mer om skyporten her: https://docs.digdir.no/docs/Maskinporten/maskinporten_skyporten.html.
 
 
