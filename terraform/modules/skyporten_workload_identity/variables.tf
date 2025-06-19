@@ -21,7 +21,7 @@ variable "required_audience" {
 
 variable "consumer_org_numbers" {
   description = "The organization numbers that should be allowed to access the Skyporten integration"
-  type        = list(string)
+  type        = set(string)
 }
 
 variable "region" {
@@ -58,4 +58,11 @@ variable "skyporten_env" {
     condition     = contains(["test", "prod"], var.skyporten_env)
     error_message = "The skyporten_env variable must be either 'test' or 'prod'."
   }
+}
+
+variable "attribute_condition" {
+  description = "The attribute condition for the OICD identity pool provider. If not set, no condition will be applied."
+  type        = string
+  default     = ""
+
 }
