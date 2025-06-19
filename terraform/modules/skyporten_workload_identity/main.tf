@@ -31,8 +31,6 @@ module "skyporten_consumer" {
   main_scope                = var.main_scope
   sub_scope                 = var.sub_scope
   region                    = var.region
-  org_number                = each.key
-  consumer_name             = each.value
   project_number            = var.project_number
   workload_identity_pool_id = google_iam_workload_identity_pool.maskinporten.workload_identity_pool_id
   project_id                = var.project_id
