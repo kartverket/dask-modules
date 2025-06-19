@@ -122,14 +122,12 @@ jobs:
           }
           EOF
           
-          DATABRICKS_CONFIG_PATH="${{ runner.temp }}/.databrickscfg"
-          cat > "${DATABRICKS_CONFIG_PATH}" <<EOF
+          cat > ~/.databrickscfg <<EOF
           [ghactions]
           host      = ${{ env.DATABRICKS_HOST }}
           auth_type = google-credentials
           google_credentials = ${IMPERSONATION_CONFIG_PATH}
           EOF
-          export "DATABRICKS_CONFIG_FILE=$DATABRICKS_CONFIG_PATH" >> $GITHUB_ENV
 
       - uses: databricks/setup-cli@main
         name: Setup databricks CLI
