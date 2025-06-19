@@ -50,6 +50,7 @@ env:
   ENVIRONMENT: ${{ inputs.environment }}
   DATABRICKS_HOST: ${{ inputs.databricks_host }}
   DATABRICKS_BUNDLE_TARGET: ${{ inputs.bundle_target }}
+  PYTHON_VERSION: ${{ inputs.python_version }}
 
 jobs:
   setup-env:
