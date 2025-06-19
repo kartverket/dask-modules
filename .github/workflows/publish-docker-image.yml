@@ -23,6 +23,7 @@ on:
       manual_deploy_trigger:
         type: string
         default: false
+
     outputs:
       image_url:
         value: ${{ jobs.build.outputs.image_url }}
@@ -45,7 +46,7 @@ jobs:
       - uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f
         id: octo-sts
         with:
-          scope: kartverket/dask-apps
+          scope: kartverket/${{ env.APPS_REPO }}
           identity: ${{ env.IDENTITY }}
 
       - name: Checkout repository
