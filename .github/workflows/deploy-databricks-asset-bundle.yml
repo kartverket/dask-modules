@@ -36,6 +36,11 @@ on:
         required: false
         default: "main"
         type: string
+      python_version:
+        description: "The python version that Databricks and Poetry expects."
+        required: false
+        default: "3.11.11"
+        type: string
 
 env:
   WORKLOAD_IDENTITY_PROVIDER_OVERRIDE: ${{ inputs.workload_identity_provider_override }}
@@ -101,6 +106,10 @@ jobs:
       - name: Validate Databricks Asset Bundle yaml
         run: |
           databricks bundle validate --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
+      - name: Setup Python
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
       - name: Python Poetry Action
         uses: abatilo/actions-poetry@v4.0.0
       - name: Deploy Databricks Asset Bundle yaml
