@@ -61,7 +61,6 @@ env:
   DATABRICKS_BUNDLE_TARGET: ${{ inputs.bundle_target }}
   PYTHON_VERSION: ${{ inputs.python_version }}
   DATABRICKS_GOOGLE_SERVICE_ACCOUNT: ${{ inputs.databricks_compute_sa }}
-  DATABRICKS_AUTH_TYPE: google-id
 
 jobs:
   setup-env:
@@ -125,7 +124,7 @@ jobs:
           
           DATABRICKS_CONFIG_PATH="${{ runner.temp }}/.databrickscfg"
           cat > "${DATABRICKS_CONFIG_PATH}" <<EOF
-          [DEFAULT]
+          [ghactions]
           host      = ${{ env.DATABRICKS_HOST }}
           auth_type = google-credentials
           google_credentials = ${IMPERSONATION_CONFIG_PATH}
@@ -137,7 +136,7 @@ jobs:
       - name: Validate Databricks Asset Bundle yaml
         if: inputs.destroy_bundle == false
         run: |
-          databricks bundle validate --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
+          databricks bundle validate --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --profile ghactions
 
       - name: Setup Python
         if: inputs.destroy_bundle == false
@@ -152,9 +151,9 @@ jobs:
         run: |
           unset ACTIONS_ID_TOKEN_REQUEST_URL
           unset ACTIONS_ID_TOKEN_REQUEST_TOKEN
-          databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
+          databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --profile ghactions
 
       - name: Destroy Databricks Bundle
         if: inputs.destroy_bundle == true && inputs.environment != 'prod'
         run: |
-          databricks bundle destroy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --auto-approve
+          databricks bundle destroy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --auto-approve --profile ghactions
