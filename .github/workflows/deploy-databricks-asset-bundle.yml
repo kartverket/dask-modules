@@ -100,14 +100,23 @@ jobs:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
           project_id: ${{ env.PROJECT_ID }}
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          version: '>= 527.0.0'
-      - name: Gcloud Login application
+          create_credentials_file: true
+      - name: Create Impersonated Credentials for Databricks SA
         run: |
-          gcloud auth application-default login --impersonate-service-account "${{ env.DATABRICKS_COMPUTE_SA }}" --quiet
-          echo "GOOGLE_CREDENTIALS=$HOME/.config/gcloud/application_default_credentials.json" >> $GITHUB_ENV
+          IMPERSONATED_CREDS_PATH="${{ runner.temp }}/databricks_sa_creds.json"
+          cat > "${IMPERSONATED_CREDS_PATH}" <<EOF
+          {
+            "type": "impersonated_service_account",
+            "source_credentials": {
+              "file": "${{ steps.google_auth.outputs.credentials_file_path }}",
+              "format": {
+                "type": "external_account"
+              }
+            },
+            "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${{ env.DATABRICKS_COMPUTE_SA }}:generateAccessToken"
+          }
+          EOF
+          echo "GOOGLE_CREDENTIALS=${IMPERSONATED_CREDS_PATH}" >> $GITHUB_ENV
       - name: Get Databricks output vars
         id: databricks-output-vars
         run: |
