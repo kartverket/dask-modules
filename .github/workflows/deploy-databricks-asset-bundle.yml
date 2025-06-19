@@ -98,15 +98,21 @@ jobs:
         uses: google-github-actions/auth@v2.1.10
         with:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ env.DATABRICKS_COMPUTE_SA }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
           project_id: ${{ env.PROJECT_ID }}
-          create_credentials_file: true
-
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: '>= 527.0.0'
+      - name: Gcloud Login application
+        run: |
+          gcloud auth application-default login --impersonate-service-account "${{ env.DATABRICKS_COMPUTE_SA }}"
+          echo "GOOGLE_CREDENTIALS=$HOME/.config/gcloud/application_default_credentials.json" >> $GITHUB_ENV
       - name: Get Databricks output vars
         id: databricks-output-vars
         run: |
           echo "DATABRICKS_HOST=${{ env.DATABRICKS_HOST }}" >> $GITHUB_ENV
-          echo "GOOGLE_CREDENTIALS=${{ steps.google_auth.outputs.credentials_file_path }}" >> $GITHUB_ENV
+        # echo "GOOGLE_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS" >> $GITHUB_ENV
       - uses: databricks/setup-cli@main
         name: Setup databricks CLI
       - name: Validate Databricks Asset Bundle yaml
