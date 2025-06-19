@@ -109,24 +109,11 @@ jobs:
 
       - name: Create Databricks Config File for Databricks Compute SA
         run: |
-          IMPERSONATION_CONFIG_PATH="${{ runner.temp }}/databricks_impersonation_config.json"
-          
-          cat > "${IMPERSONATION_CONFIG_PATH}" <<EOF
-          {
-            "type": "impersonated_service_account",
-            "source_credentials": {
-              "file": "${{ steps.google_auth.outputs.credentials_file_path }}",
-              "format": { "type": "external_account" }
-            },
-            "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${{ env.DATABRICKS_COMPUTE_SA }}:generateAccessToken"
-          }
-          EOF
-          
           cat > ~/.databrickscfg <<EOF
           [ghactions]
-          host      = ${{ env.DATABRICKS_HOST }}
-          auth_type = google-credentials
-          google_credentials = ${IMPERSONATION_CONFIG_PATH}
+          host                   = ${{ env.DATABRICKS_HOST }}
+          auth_type              = google-id
+          google_service_account = ${{ env.DATABRICKS_COMPUTE_SA }}
           EOF
 
       - uses: databricks/setup-cli@main
