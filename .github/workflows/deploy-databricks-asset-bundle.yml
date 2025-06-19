@@ -101,6 +101,8 @@ jobs:
       - name: Validate Databricks Asset Bundle yaml
         run: |
           databricks bundle validate --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
+      - name: Python Poetry Action
+        uses: abatilo/actions-poetry@v4.0.0
       - name: Deploy Databricks Asset Bundle yaml
         run: |
           databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
