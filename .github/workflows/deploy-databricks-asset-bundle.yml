@@ -134,6 +134,8 @@ jobs:
       - name: Validate Databricks Asset Bundle yaml
         if: inputs.destroy_bundle == false
         run: |
+          unset ACTIONS_ID_TOKEN_REQUEST_URL
+          unset ACTIONS_ID_TOKEN_REQUEST_TOKEN
           databricks bundle validate --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --profile ghactions
 
       - name: Setup Python
@@ -154,4 +156,6 @@ jobs:
       - name: Destroy Databricks Bundle
         if: inputs.destroy_bundle == true && inputs.environment != 'prod'
         run: |
+          unset ACTIONS_ID_TOKEN_REQUEST_URL
+          unset ACTIONS_ID_TOKEN_REQUEST_TOKEN
           databricks bundle destroy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --auto-approve --profile ghactions
