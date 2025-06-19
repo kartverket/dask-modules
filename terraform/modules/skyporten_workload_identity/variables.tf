@@ -21,7 +21,7 @@ variable "required_audience" {
 
 variable "consumer_org_numbers" {
   description = "The organization numbers that should be allowed to access the Skyporten integration"
-  type        = list(string)
+  type        = set(string)
 }
 
 variable "region" {
