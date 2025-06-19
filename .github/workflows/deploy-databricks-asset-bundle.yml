@@ -55,7 +55,8 @@ env:
   DATABRICKS_HOST: ${{ inputs.databricks_host }}
   DATABRICKS_BUNDLE_TARGET: ${{ inputs.bundle_target }}
   PYTHON_VERSION: ${{ inputs.python_version }}
-  DATABRICKS_COMPUTE_SA: ${{ inputs.databricks_compute_sa }}
+  DATABRICKS_GOOGLE_SERVICE_ACCOUNT: ${{ inputs.databricks_compute_sa }}
+  DATABRICKS_AUTH_TYPE: google-id
 
 jobs:
   setup-env:
@@ -100,18 +101,10 @@ jobs:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
           project_id: ${{ env.PROJECT_ID }}
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-      - name: Generate and Export Databricks Compute SA Access Token
-        run: |
-          DB_ACCESS_TOKEN=$(gcloud auth print-access-token --impersonate-service-account="${{ env.DATABRICKS_COMPUTE_SA }}")
-          echo "DATABRICKS_ACCESS_TOKEN=${DB_ACCESS_TOKEN}" >> $GITHUB_ENV
       - uses: databricks/setup-cli@main
         name: Setup databricks CLI
       - name: Validate Databricks Asset Bundle yaml
         run: |
-          unset ACTIONS_ID_TOKEN_REQUEST_URL
-          unset ACTIONS_ID_TOKEN_REQUEST_TOKEN
           databricks bundle validate --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
       - name: Setup Python
         uses: actions/setup-python@v5.6.0
