@@ -60,7 +60,7 @@ env:
   DATABRICKS_HOST: ${{ inputs.databricks_host }}
   DATABRICKS_BUNDLE_TARGET: ${{ inputs.bundle_target }}
   PYTHON_VERSION: ${{ inputs.python_version }}
-  DATABRICKS_GOOGLE_SERVICE_ACCOUNT: ${{ inputs.databricks_compute_sa }}
+  DATABRICKS_COMPUTE_SA: ${{ inputs.databricks_compute_sa }}
 
 jobs:
   setup-env:
