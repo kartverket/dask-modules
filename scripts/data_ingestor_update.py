@@ -39,16 +39,16 @@ def update_state_bucket(monorepo_folder_path: str, env: str, val_for_env: str) -
         file.close()
 
 
-def update_databricks_config(file_path: str, area_name: str, project_name: str):
-    config_path = f'{file_path}/src/databricks/config.py'
-    
-    with open(config_path, 'r') as file:
-        lines = [line.replace("plattform_dataprodukter", f"{area_name.lower()}_{project_name.lower()}") for line in file.readlines()]
-        file.close()
-
-        with open(config_path, 'w') as file:
-            file.writelines(lines)
-            file.close()
+# def update_databricks_config(file_path: str, area_name: str, project_name: str):
+#     config_path = f'{file_path}/src/databricks/config.py'
+#
+#     with open(config_path, 'r') as file:
+#         lines = [line.replace("plattform_dataprodukter", f"{area_name.lower()}_{project_name.lower()}") for line in file.readlines()]
+#         file.close()
+#
+#         with open(config_path, 'w') as file:
+#             file.writelines(lines)
+#             file.close()
 
 
 def clear_codeowners(file_path: str, team_name: str):
@@ -120,7 +120,7 @@ def edit_file(file_path, json_obj):
     project_name: str = json_obj.get("project_name")
 
     clear_codeowners(file_path, team_name)
-    update_databricks_config(file_path, area_name, project_name)
+    # update_databricks_config(file_path, area_name, project_name)
     clear_catalog_info(file_path, team_name, project_name)
 
     for env in envs:
