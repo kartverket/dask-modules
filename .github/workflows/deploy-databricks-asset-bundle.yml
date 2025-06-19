@@ -116,12 +116,12 @@ jobs:
             "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${{ env.DATABRICKS_COMPUTE_SA }}:generateAccessToken"
           }
           EOF
-          echo "GOOGLE_CREDENTIALS=${IMPERSONATED_CREDS_PATH}" >> $GITHUB_ENV
+          echo "IMPERSONATED_CREDS_PATH=${IMPERSONATED_CREDS_PATH}" >> $GITHUB_ENV
       - name: Get Databricks output vars
         id: databricks-output-vars
         run: |
           echo "DATABRICKS_HOST=${{ env.DATABRICKS_HOST }}" >> $GITHUB_ENV
-        # echo "GOOGLE_CREDENTIALS=$GOOGLE_APPLICATION_CREDENTIALS" >> $GITHUB_ENV
+          echo "GOOGLE_CREDENTIALS=${{ env.IMPERSONATED_CREDS_PATH }}" >> $GITHUB_ENV
       - uses: databricks/setup-cli@main
         name: Setup databricks CLI
       - name: Validate Databricks Asset Bundle yaml
