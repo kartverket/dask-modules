@@ -106,6 +106,31 @@ jobs:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
           project_id: ${{ env.PROJECT_ID }}
+          create_credentials_file: true
+
+      - name: Create Databricks Config File for Databricks Compute SA
+        run: |
+          IMPERSONATION_CONFIG_PATH="${{ runner.temp }}/databricks_impersonation_config.json"
+          
+          cat > "${IMPERSONATION_CONFIG_PATH}" <<EOF
+          {
+            "type": "impersonated_service_account",
+            "source_credentials": {
+              "file": "${{ steps.google_auth.outputs.credentials_file_path }}",
+              "format": { "type": "external_account" }
+            },
+            "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${{ env.DATABRICKS_COMPUTE_SA }}:generateAccessToken"
+          }
+          EOF
+          
+          DATABRICKS_CONFIG_PATH="${{ runner.temp }}/.databrickscfg"
+          cat > "${DATABRICKS_CONFIG_PATH}" <<EOF
+          [DEFAULT]
+          host      = ${{ env.DATABRICKS_HOST }}
+          auth_type = google-credentials
+          google_credentials = ${IMPERSONATION_CONFIG_PATH}
+          EOF
+          export "DATABRICKS_CONFIG_FILE=$DATABRICKS_CONFIG_PATH" >> $GITHUB_ENV
 
       - uses: databricks/setup-cli@main
         name: Setup databricks CLI
