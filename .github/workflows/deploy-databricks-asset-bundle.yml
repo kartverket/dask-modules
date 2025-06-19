@@ -101,6 +101,11 @@ jobs:
           service_account: ${{ env.SERVICE_ACCOUNT }}
           project_id: ${{ env.PROJECT_ID }}
           create_credentials_file: true
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      - name: Test Impersonation
+        run: |
+          gcloud auth print-access-token --impersonate-service-account="${{ env.DATABRICKS_COMPUTE_SA }}"
       - name: Create Impersonated Credentials for Databricks SA
         run: |
           IMPERSONATED_CREDS_PATH="${{ runner.temp }}/databricks_sa_creds.json"
