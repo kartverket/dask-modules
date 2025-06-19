@@ -41,6 +41,10 @@ on:
         required: false
         default: "3.11.11"
         type: string
+      databricks_compute_sa:
+        description: "Service account responsible for running Databricks jobs and deploying Databricks Asset Bundle."
+        required: true
+        type: string
 
 env:
   WORKLOAD_IDENTITY_PROVIDER_OVERRIDE: ${{ inputs.workload_identity_provider_override }}
@@ -51,6 +55,7 @@ env:
   DATABRICKS_HOST: ${{ inputs.databricks_host }}
   DATABRICKS_BUNDLE_TARGET: ${{ inputs.bundle_target }}
   PYTHON_VERSION: ${{ inputs.python_version }}
+  DATABRICKS_COMPUTE_SA: ${{ inputs.databricks_compute_sa }}
 
 jobs:
   setup-env:
@@ -90,10 +95,10 @@ jobs:
 
       - id: google_auth
         name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@v2.1.10
         with:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ env.SERVICE_ACCOUNT }}
+          service_account: ${{ env.DATABRICKS_COMPUTE_SA }}
           project_id: ${{ env.PROJECT_ID }}
           create_credentials_file: true
 
