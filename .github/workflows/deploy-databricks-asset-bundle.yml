@@ -126,6 +126,8 @@ jobs:
         name: Setup databricks CLI
       - name: Validate Databricks Asset Bundle yaml
         run: |
+          unset ACTIONS_ID_TOKEN_REQUEST_URL
+          unset ACTIONS_ID_TOKEN_REQUEST_TOKEN
           databricks bundle validate --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
       - name: Setup Python
         uses: actions/setup-python@v5.6.0
