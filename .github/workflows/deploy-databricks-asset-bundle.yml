@@ -106,7 +106,7 @@ jobs:
           version: '>= 527.0.0'
       - name: Gcloud Login application
         run: |
-          gcloud auth application-default login --impersonate-service-account "${{ env.DATABRICKS_COMPUTE_SA }}"
+          gcloud auth application-default login --impersonate-service-account "${{ env.DATABRICKS_COMPUTE_SA }}" --quiet
           echo "GOOGLE_CREDENTIALS=$HOME/.config/gcloud/application_default_credentials.json" >> $GITHUB_ENV
       - name: Get Databricks output vars
         id: databricks-output-vars
