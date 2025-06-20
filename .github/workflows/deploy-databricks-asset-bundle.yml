@@ -112,7 +112,6 @@ jobs:
       - name: Configure Databricks and Terraform env var
         run: |
           echo "GOOGLE_CREDENTIALS=$(cat ${{ steps.google_auth.outputs.credentials_file_path }})" >> $GITHUB_ENV
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$(cat ${{ steps.google_auth.outputs.credentials_file_path }})" >> $GITHUB_ENV
 
       - uses: databricks/setup-cli@main
         name: Setup databricks CLI
