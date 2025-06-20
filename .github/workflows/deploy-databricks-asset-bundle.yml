@@ -115,6 +115,8 @@ jobs:
 
       - uses: databricks/setup-cli@main
         name: Setup databricks CLI
+        with:
+          version: 0.255.0
 
       - name: Validate Databricks Asset Bundle yaml
         run: |
