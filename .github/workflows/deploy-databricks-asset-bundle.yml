@@ -62,7 +62,8 @@ env:
   PYTHON_VERSION: ${{ inputs.python_version }}
   DATABRICKS_GOOGLE_SERVICE_ACCOUNT: ${{ inputs.databricks_compute_sa }}
   DATABRICKS_AUTH_TYPE: google-id
-  # GOOGLE_IMPERSONATE_SERVICE_ACCOUNT: ${{ inputs.databricks_compute_sa }}
+  GOOGLE_IMPERSONATE_SERVICE_ACCOUNT: ${{ inputs.databricks_compute_sa }}
+  GOOGLE_SERVICE_ACCOUNT: ${{ inputs.service_account }}
 
 jobs:
   setup-env:
