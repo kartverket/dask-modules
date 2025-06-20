@@ -60,7 +60,8 @@ env:
   DATABRICKS_HOST: ${{ inputs.databricks_host }}
   DATABRICKS_BUNDLE_TARGET: ${{ inputs.bundle_target }}
   PYTHON_VERSION: ${{ inputs.python_version }}
-  DATABRICKS_COMPUTE_SA: ${{ inputs.databricks_compute_sa }}
+  DATABRICKS_GOOGLE_SERVICE_ACCOUNT: ${{ inputs.databricks_compute_sa }}
+  DATABRICKS_AUTH_TYPE: google-id
 
 jobs:
   setup-env:
@@ -107,42 +108,32 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
           create_credentials_file: true
 
-      - name: Create Databricks Config File for Databricks Compute SA
+      - name: Configure Databricks and Terraform env var
         run: |
-          cat > ~/.databrickscfg <<EOF
-          [ghactions]
-          host                   = ${{ env.DATABRICKS_HOST }}
-          auth_type              = google-id
-          google_service_account = ${{ env.DATABRICKS_COMPUTE_SA }}
-          EOF
+          echo "GOOGLE_CREDENTIALS=$(cat ${{ steps.google_auth.outputs.credentials_file_path }})" >> $GITHUB_ENV
 
       - uses: databricks/setup-cli@main
         name: Setup databricks CLI
+
       - name: Validate Databricks Asset Bundle yaml
-        if: inputs.destroy_bundle == false
         run: |
-          unset ACTIONS_ID_TOKEN_REQUEST_URL
-          unset ACTIONS_ID_TOKEN_REQUEST_TOKEN
-          databricks bundle validate --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --profile ghactions
+          databricks bundle validate --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
 
       - name: Setup Python
-        if: inputs.destroy_bundle == false
         uses: actions/setup-python@v5.6.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
       - name: Python Poetry Action
-        if: inputs.destroy_bundle == false
         uses: abatilo/actions-poetry@v4.0.0
+
       - name: Deploy Databricks Asset Bundle yaml
-        if: inputs.destroy_bundle == false
         run: |
           unset ACTIONS_ID_TOKEN_REQUEST_URL
           unset ACTIONS_ID_TOKEN_REQUEST_TOKEN
-          databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --profile ghactions
+          databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
 
       - name: Destroy Databricks Bundle
         if: inputs.destroy_bundle == true && inputs.environment != 'prod'
         run: |
-          unset ACTIONS_ID_TOKEN_REQUEST_URL
-          unset ACTIONS_ID_TOKEN_REQUEST_TOKEN
-          databricks bundle destroy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --auto-approve --profile ghactions
+          databricks bundle destroy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --auto-approve
