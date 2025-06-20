@@ -108,6 +108,7 @@ jobs:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
           project_id: ${{ env.PROJECT_ID }}
+          token_format: id_token
           create_credentials_file: true
 
 #      - name: Configure Databricks and Terraform env var
