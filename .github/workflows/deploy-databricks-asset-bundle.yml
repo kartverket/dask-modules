@@ -136,8 +136,6 @@ jobs:
 
       - name: Deploy Databricks Asset Bundle yaml
         run: |
-          unset ACTIONS_ID_TOKEN_REQUEST_URL
-          unset ACTIONS_ID_TOKEN_REQUEST_TOKEN
           databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
 
       - name: Destroy Databricks Bundle
