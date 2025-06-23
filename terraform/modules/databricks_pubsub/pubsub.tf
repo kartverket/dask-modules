@@ -35,7 +35,7 @@ resource "google_pubsub_subscription_iam_member" "sub_consumer" {
 }
 
 resource "google_service_account_key" "myki" {
-  service_account_id = local.team_compute_sa
+  service_account_id = "databricks-compute"
 }
 
 resource "databricks_secret_scope" "pubsub_secret_scope" {
