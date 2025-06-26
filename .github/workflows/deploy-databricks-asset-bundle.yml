@@ -128,8 +128,8 @@ jobs:
         uses: abatilo/actions-poetry@v4.0.0
 
       - name: Deploy Databricks Asset Bundle yaml
+        if: inputs.destroy_bundle == false
         env:
-          if: inputs.destroy_bundle == false
           GOOGLE_CREDENTIALS: "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}"
         run: |
           databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
