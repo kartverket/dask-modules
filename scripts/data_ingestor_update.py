@@ -88,7 +88,7 @@ def configure_github_deploy_workflow(file_path: str, env: str, project_name: str
         "dev": "dataplattform-deploy@dataprodukter-dev-5daa.iam.gserviceaccount.com",
         "prod": "dataplattform-deploy@dataprodukter-prod-d62f.iam.gserviceaccount.com"
     }
-    copmute_sa_to_replace = {
+    compute_sa_to_replace = {
         "dev": "databricks-compute@dataprodukter-dev-5daa.iam.gserviceaccount.com",
         "prod": "databricks-compute@dataprodukter-prod-d62f.iam.gserviceaccount.com"
     }
@@ -102,7 +102,7 @@ def configure_github_deploy_workflow(file_path: str, env: str, project_name: str
     replacement_tuples = [
         (project_number_to_replace[env], project_number),
         (deploy_sa_to_replace[env], f'{project_name.lower()}-deploy@{project_id}.iam.gserviceaccount.com'),
-        (copmute_sa_to_replace[env], f'databricks-compute@{project_id}.iam.gserviceaccount.com'),
+        (compute_sa_to_replace[env], f'databricks-compute@{project_id}.iam.gserviceaccount.com'),
         (repo_to_replace, f'{project_name.lower()}-data-ingestor'),
         (project_name_to_replace, project_name.lower()),
     ]
