@@ -39,9 +39,9 @@ def update_state_bucket(monorepo_folder_path: str, env: str, val_for_env: str) -
         file.close()
 
 
-def update_databricks_config(file_path: str, area_name: str, project_name: str):
-    config_path = f'{file_path}/src/databricks/config.py'
-    
+def update_databricks_bundle_yml(file_path: str, area_name: str, project_name: str):
+    config_path = f'{file_path}/databricks.yml'
+
     with open(config_path, 'r') as file:
         lines = [line.replace("plattform_dataprodukter", f"{area_name.lower()}_{project_name.lower()}") for line in file.readlines()]
         file.close()
@@ -57,8 +57,8 @@ def clear_codeowners(file_path: str, team_name: str):
     with open(codeowners_path, 'r') as file:
         file_content = file.read()
         file_content = file_content.replace("Team DASK (Dataplattform Statens Kartverk)", f"Team {team_name}")
-        file_content = file_content.replace("@jonasmw94 @JoachimHaa @augustdahl @Ed0rF", "<<enter team members (@username) here>>")
-        file_content = file_content.replace("@augustdahl", "<<enter security champion (@username) here>>")
+        file_content = file_content.replace("@kartverket/dask", f"@kartverket/{team_name}")
+        file_content = file_content.replace("@sondrfos", "<<enter security champion (@username) here>>")
         file.close()
 
         with open(codeowners_path, 'w') as file:
@@ -72,7 +72,7 @@ def clear_catalog_info(file_path: str, team_name: str, project_name: str):
     with open(cataloginfo_path, 'r') as file:
         file_content = file.read()
         file_content = file_content.replace("dask-monorepo-reference-setup", f'{project_name.lower()}-data-ingestor')
-        file_content = file_content.replace("augustdahl", "<<enter security champion (@username) here>>")
+        file_content = file_content.replace("documentation", "dask jobs")
         file_content = file_content.replace("dataplattform", team_name)
         file.close()
 
@@ -84,9 +84,13 @@ def clear_catalog_info(file_path: str, team_name: str, project_name: str):
 def configure_github_deploy_workflow(file_path: str, env: str, project_name: str, project_id: str, project_number: str):
     workflows_path = f'{file_path}/.github/workflows'
 
-    sa_to_replace = {
+    deploy_sa_to_replace = {
         "dev": "dataplattform-deploy@dataprodukter-dev-5daa.iam.gserviceaccount.com",
         "prod": "dataplattform-deploy@dataprodukter-prod-d62f.iam.gserviceaccount.com"
+    }
+    compute_sa_to_replace = {
+        "dev": "databricks-compute@dataprodukter-dev-5daa.iam.gserviceaccount.com",
+        "prod": "databricks-compute@dataprodukter-prod-d62f.iam.gserviceaccount.com"
     }
     project_number_to_replace = {
         "dev": "167289175624",
@@ -97,7 +101,8 @@ def configure_github_deploy_workflow(file_path: str, env: str, project_name: str
 
     replacement_tuples = [
         (project_number_to_replace[env], project_number),
-        (sa_to_replace[env], f'{project_name.lower()}-deploy@{project_id}.iam.gserviceaccount.com'),
+        (deploy_sa_to_replace[env], f'{project_name.lower()}-deploy@{project_id}.iam.gserviceaccount.com'),
+        (compute_sa_to_replace[env], f'databricks-compute@{project_id}.iam.gserviceaccount.com'),
         (repo_to_replace, f'{project_name.lower()}-data-ingestor'),
         (project_name_to_replace, project_name.lower()),
     ]
@@ -120,7 +125,7 @@ def edit_file(file_path, json_obj):
     project_name: str = json_obj.get("project_name")
 
     clear_codeowners(file_path, team_name)
-    update_databricks_config(file_path, area_name, project_name)
+    update_databricks_bundle_yml(file_path, area_name, project_name)
     clear_catalog_info(file_path, team_name, project_name)
 
     for env in envs:

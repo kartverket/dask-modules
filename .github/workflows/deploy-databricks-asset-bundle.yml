@@ -1,0 +1,142 @@
+name: Deploy Databricks notebooks
+
+on:
+  workflow_call:
+    inputs:
+      service_account:
+        description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
+        required: true
+        type: string
+      auth_project_number:
+        description: "The GCP Project Number used for authentication. A 12-digit number used as a unique identifier for the project. Used to find workload identity pool."
+        required: true
+        type: string
+      runner:
+        description: "The GitHub runner to use when running the deploy. This can for example be `ubuntu-latest`"
+        required: true
+        type: string
+      databricks_host:
+        description: "The host of the Databricks workspace."
+        required: true
+        type: string
+      databricks_compute_sa:
+        description: "Service account responsible for running Databricks jobs and deploying Databricks Asset Bundle."
+        required: true
+        type: string
+      workload_identity_provider_override:
+        description: "The ID of the provider to use for authentication. Only used for overriding the default workload identity provider based on project number. It should be in the format of `projects/{{project}}/locations/global/workloadIdentityPools/{{workload_identity_pool_id}}/providers/{{workload_identity_pool_provider_id}}`"
+        required: false
+        type: string
+      project_id:
+        description: 'The GCP Project ID to use as the "active project" when running Terraform. Example 123456789987'
+        required: false
+        type: string
+      environment:
+        description: "The GitHub environment to use when deploying. See [using environments for deployment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) for more info on this"
+        required: false
+        type: string
+      bundle_target:
+        description: "The target from Databricks Asset Bundle yaml to use for deploy."
+        required: false
+        default: "main"
+        type: string
+      python_version:
+        description: "The python version that Databricks and Poetry expects."
+        required: false
+        default: "3.11.11"
+        type: string
+      destroy_bundle:
+        description: "Should Databricks Asset Bundle be destroyed?"
+        required: false
+        default: false
+        type: boolean
+
+env:
+  WORKLOAD_IDENTITY_PROVIDER_OVERRIDE: ${{ inputs.workload_identity_provider_override }}
+  AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
+  DEPLOY_ACCOUNT: ${{ inputs.service_account }}
+  PROJECT_ID: ${{ inputs.project_id }}
+  ENVIRONMENT: ${{ inputs.environment }}
+  DATABRICKS_HOST: ${{ inputs.databricks_host }}
+  DATABRICKS_BUNDLE_TARGET: ${{ inputs.bundle_target }}
+  PYTHON_VERSION: ${{ inputs.python_version }}
+  COMPUTE_ACCOUNT: ${{ inputs.databricks_compute_sa }}
+  DATABRICKS_AUTH_TYPE: google-credentials
+
+jobs:
+  setup-env:
+    runs-on: ubuntu-latest
+    outputs:
+      workload_identity_provider: ${{ steps.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
+    steps:
+      - name: Set vars
+        id: set-output
+        run: |
+          PRODUCT_NAME=$(echo $DEPLOY_ACCOUNT | sed 's/-deploy.*//')
+          DEFAULT_WORKLOAD_IDENTITY="projects/$AUTH_PROJECT_NUMBER/locations/global/workloadIdentityPools/$PRODUCT_NAME-deploy-pool/providers/github-provider"
+          OVERRIDE=$WORKLOAD_IDENTITY_PROVIDER_OVERRIDE
+          PROVIDER=${OVERRIDE:-$DEFAULT_WORKLOAD_IDENTITY}
+          echo "WORKLOAD_IDENTITY_PROVIDER=$PROVIDER" >> $GITHUB_OUTPUT
+  deploy_databricks:
+    needs: [setup-env]
+    name: Databricks deploy to ${{ inputs.environment }}
+    runs-on: ${{ inputs.runner }}
+    environment: ${{ inputs.environment }}
+
+    # Disallow parallel jobs for same env to allow aquiring state lock instead of crashing
+    concurrency: ${{ inputs.environment }}
+
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      WORKLOAD_IDENTITY_PROVIDER: ${{ needs.setup-env.outputs.WORKLOAD_IDENTITY_PROVIDER }}
+
+    steps:
+      # Checkout the repository to the GitHub Actions runner
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - id: google_auth
+        name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2.1.10
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.COMPUTE_ACCOUNT }}
+          project_id: ${{ env.PROJECT_ID }}
+
+      - uses: databricks/setup-cli@main
+        name: Setup databricks CLI
+
+      - name: Validate Databricks Asset Bundle yaml
+        if: inputs.destroy_bundle == false
+        env:
+          GOOGLE_CREDENTIALS: "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}"
+        run: |
+          databricks bundle validate --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
+
+      - name: Setup Python
+        if: inputs.destroy_bundle == false
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Python Poetry Action
+        if: inputs.destroy_bundle == false
+        uses: abatilo/actions-poetry@v4.0.0
+
+      - name: Deploy Databricks Asset Bundle yaml
+        if: inputs.destroy_bundle == false
+        env:
+          GOOGLE_CREDENTIALS: "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}"
+        run: |
+          databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
+
+      - name: Destroy Databricks Bundle
+        if: inputs.destroy_bundle == true && inputs.environment != 'prod'
+        env:
+          GOOGLE_CREDENTIALS: "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}"
+        run: |
+          databricks bundle destroy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --auto-approve
