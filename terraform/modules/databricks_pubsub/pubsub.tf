@@ -21,23 +21,25 @@ resource "google_pubsub_topic_iam_member" "topic_member" {
 }
 
 resource "google_pubsub_subscription_iam_member" "sub_viewer" {
-  member       = "serviceAccount:${local.team_compute_sa}"
-  role         = "roles/pubsub.viewer"
+  project      = google_pubsub_topic.databricks_topic.project
   subscription = google_pubsub_subscription.databricks_subscriptino.name
+  role         = "roles/pubsub.viewer"
+  member       = "serviceAccount:${local.team_compute_sa}"
 }
 
 resource "google_pubsub_subscription_iam_member" "sub_consumer" {
-  member       = "serviceAccount:${local.team_compute_sa}"
-  role         = "roles/pubsub.subscriber"
+  project      = google_pubsub_topic.databricks_topic.project
   subscription = google_pubsub_subscription.databricks_subscriptino.name
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:${local.team_compute_sa}"
 }
 
 resource "google_service_account_key" "myki" {
-  service_account_id = "databricks-compute"
+  service_account_id = local.team_compute_sa
 }
 
 resource "databricks_secret_scope" "pubsub_secret_scope" {
-  name     = "${google_pubsub_topic.databricks_topic.name}-scope"
+  name = "${google_pubsub_topic.databricks_topic.name}-scope"
 }
 
 resource "databricks_secret_acl" "pubsub_secret_acl" {
