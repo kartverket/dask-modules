@@ -19,3 +19,5 @@ module "dbx_pubsub_poc" {
   }
 }
 ```
+
+Se [eksempelnotebook i Databricks](https://2004011444667850.0.gcp.databricks.com/editor/notebooks/2460560587796130) med kode for å streame hendelsene inn i en bronsetabell
