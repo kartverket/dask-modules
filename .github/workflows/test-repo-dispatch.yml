@@ -3,6 +3,7 @@ name: Create onboarding pull request for new product
 on:
   repository_dispatch:
     types: [onboarding]
+  workflow_dispatch:
 
 jobs:
   run-test:
