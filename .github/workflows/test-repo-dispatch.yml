@@ -1,0 +1,20 @@
+name: Create onboarding pull request for new product
+
+on:
+  repository_dispatch:
+    types: [onboarding]
+  workflow_dispatch:
+
+jobs:
+  run-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Hello World
+        run: echo "Hello World!"
