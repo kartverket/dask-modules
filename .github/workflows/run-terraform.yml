@@ -3,6 +3,10 @@ name: Run Terraform
 on:
   workflow_call:
     inputs:
+      comment_on_pr:
+        description: "Should a Terraform plan comment be generated for the PR? [true/false] Requires 'pull-requests: write'"
+        required: false
+        default: "true"
       service_account:
         description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
         required: true
@@ -59,6 +63,7 @@ on:
         default: false
 
 env:
+  COMMENT_ON_PR: ${{ inputs.comment_on_pr }}
   WORKLOAD_IDENTITY_PROVIDER_OVERRIDE: ${{ inputs.workload_identity_provider_override }}
   AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
   SERVICE_ACCOUNT: ${{ inputs.service_account }}
@@ -109,12 +114,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2.0.3
-        with:
-          terraform_wrapper: false
-
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v1
         with:
@@ -122,22 +121,34 @@ jobs:
           service_account: ${{ env.SERVICE_ACCOUNT }}
           project_id: ${{ env.PROJECT_ID }}
 
+      - name: Init env variables
+        run: |
+          echo TF_CLI_ARGS_init=" -input=false ${TF_INIT_OPTION_1:+"$TF_INIT_OPTION_1"} ${TF_INIT_OPTION_2:+"$TF_INIT_OPTION_2"} ${TF_INIT_OPTION_3:+"$TF_INIT_OPTION_3"}" >> "$GITHUB_ENV"
+          TF_CLI_ARGS_plan=" -input=false ${TF_OPTION_1:+"$TF_OPTION_1"}"
+          echo TF_CLI_ARGS_plan="$TF_CLI_ARGS_plan" >> "$GITHUB_ENV"
+          echo TF_CLI_ARGS_apply="$TF_CLI_ARGS_plan" >> "$GITHUB_ENV"
+
       # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
-      - name: Terraform Init
-        run: |
-          terraform init -input=false \
-              ${TF_INIT_OPTION_1:+"$TF_INIT_OPTION_1"} \
-              ${TF_INIT_OPTION_2:+"$TF_INIT_OPTION_2"} \
-              ${TF_INIT_OPTION_3:+"$TF_INIT_OPTION_3"}
+      - name: Terraform Setup
+        uses: kartverket/actions/terraform/setup@v0.2.0
+        with:
+          path: ${{ env.WORKING_DIRECTORY }}
 
-      # Run terraform destroy on push to main if 'destroy' is set to true
-      - name: Terraform Destroy
-        if: env.DESTROY == 'true'
-        id: destroy
-        run: |
-          terraform destroy -auto-approve \
-              ${TF_OPTION_1:+"$TF_OPTION_1"}
+      - name: Terraform Validate
+        uses: kartverket/actions/terraform/validate@v0.2.0
+        with:
+          path: ${{ env.WORKING_DIRECTORY }}
 
-      - name: Run Terraform
-        if: env.DESTROY == 'false'
-        run: terraform apply -input=false -auto-approve=true ${TF_OPTION_1:+"$TF_OPTION_1"}
+      - name: Terraform Plan
+        uses: kartverket/actions/terraform/plan@v0.2.0
+        with:
+          environment: ${{ env.ENVIRONMENT }}
+          path: ${{ env.WORKING_DIRECTORY }}
+          destroy: ${{ env.DESTROY }}
+          comment_on_pr: ${{ env.COMMENT_ON_PR }}
+
+      - name: Terraform Apply
+        uses: kartverket/actions/terraform/apply@v0.2.0
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        with:
+          path: ${{ env.WORKING_DIRECTORY }}
