@@ -3,6 +3,10 @@ name: Run Terraform
 on:
   workflow_call:
     inputs:
+      terraform_apply:
+        description: "If this is not set, terraform apply runs on a push event to `main`. This flag (true/false) can override this behaviour (e.g. when run from a pull request)."
+        required: false
+        type: string
       comment_on_pr:
         description: "Should a Terraform plan comment be generated for the PR? [true/false] Requires 'pull-requests: write'"
         required: false
@@ -150,6 +154,6 @@ jobs:
 
       - name: Terraform Apply
         uses: kartverket/actions/terraform/apply@v0.2.0
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: inputs.terraform_apply == 'true' || github.ref == 'refs/heads/main' && github.event_name == 'push' && inputs.terraform_apply != 'false'
         with:
           path: ${{ env.WORKING_DIRECTORY }}
