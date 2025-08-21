@@ -6,6 +6,7 @@ on:
       comment_on_pr:
         description: "Should a Terraform plan comment be generated for the PR? [true/false] Requires 'pull-requests: write'"
         required: false
+        type: string
         default: "true"
       service_account:
         description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
