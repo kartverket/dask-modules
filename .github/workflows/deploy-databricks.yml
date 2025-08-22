@@ -158,7 +158,3 @@ jobs:
         if: env.REPO_EXISTS == 'true'
         run: |
           databricks repos update ${{ env.DATABRICKS_REPO_PATH }} --branch "${{ env.DATABRICKS_DEPLOY_BRANCH }}"
-      - name: Delete git-credentials
-        if: always() && env.CREDENTIAL_ID != ''
-        run: |
-          databricks git-credentials delete $CREDENTIAL_ID
