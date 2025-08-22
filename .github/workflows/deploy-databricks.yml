@@ -80,6 +80,9 @@ jobs:
     name: Databricks deploy to ${{ inputs.environment }}
     runs-on: ${{ inputs.runner }}
     environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
 
     # Disallow parallel jobs for same env to allow aquiring state lock instead of crashing
     concurrency: ${{ inputs.environment }}
@@ -118,7 +121,24 @@ jobs:
           echo "CREDENTIAL_ID=''" >> $GITHUB_ENV
       - name: Create git-credentials
         run: |
+          set -e
+          echo "Listing existing Git credentials for user: $GITHUB_ACTOR"
+          CREDENTIAL_IDS=$(databricks git-credentials list --output JSON | jq -r '.[] | .credential_id')
+          
+          if [ -n "$CREDENTIAL_IDS" ]; then
+            echo "Found existing credentials to delete."
+            echo "$CREDENTIAL_IDS"
+            for ID in $CREDENTIAL_IDS; do
+              echo "Deleting credential with ID: $ID"
+              databricks git-credentials delete $ID
+            done
+            echo "Finished deleting old credentials."
+          else
+            echo "No existing credentials found to delete."
+          fi
+          echo "Creating new temporary credential..."
           OUTPUT=$(databricks git-credentials create gitHub --git-username $GITHUB_ACTOR --personal-access-token ${{ secrets.GITHUB_TOKEN }})
+          echo "New credential created:"
           echo "$OUTPUT"
           CREDENTIAL_ID=$(echo "$OUTPUT" | jq -r '.credential_id')
           echo "CREDENTIAL_ID=$CREDENTIAL_ID" >> $GITHUB_ENV
@@ -138,7 +158,3 @@ jobs:
         if: env.REPO_EXISTS == 'true'
         run: |
           databricks repos update ${{ env.DATABRICKS_REPO_PATH }} --branch "${{ env.DATABRICKS_DEPLOY_BRANCH }}"
-      - name: Delete git-credentials
-        if: always() && env.CREDENTIAL_ID != ''
-        run: |
-          databricks git-credentials delete $CREDENTIAL_ID
