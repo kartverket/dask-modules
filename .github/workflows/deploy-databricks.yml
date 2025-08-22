@@ -80,6 +80,9 @@ jobs:
     name: Databricks deploy to ${{ inputs.environment }}
     runs-on: ${{ inputs.runner }}
     environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
 
     # Disallow parallel jobs for same env to allow aquiring state lock instead of crashing
     concurrency: ${{ inputs.environment }}
