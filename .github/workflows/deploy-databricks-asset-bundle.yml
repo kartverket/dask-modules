@@ -132,7 +132,7 @@ jobs:
         env:
           GOOGLE_CREDENTIALS: "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}"
         run: |
-          databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
+          databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --auto-approve
 
       - name: Destroy Databricks Bundle
         if: inputs.destroy_bundle == true && inputs.environment != 'prod'
