@@ -6,16 +6,16 @@ resource "google_storage_bucket" "source_bucket" {
   uniform_bucket_level_access = true
 }
 
-data "archive_file" "function_source_zip" {
+resource "archive_file" "function_source_zip" {
   type        = "zip"
   source_dir  = var.source_dir
   output_path = "${path.module}/${var.name}.zip"
 }
 
 resource "google_storage_bucket_object" "function_source" {
-  name   = "${var.name}-source#${data.archive_file.function_source_zip.output_md5}.zip"
+  name   = "${var.name}-source#${archive_file.function_source_zip.output_md5}.zip"
   bucket = google_storage_bucket.source_bucket.name
-  source = data.archive_file.function_source_zip.output_path
+  source = archive_file.function_source_zip.output_path
 }
 ##########
 
