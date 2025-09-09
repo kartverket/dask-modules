@@ -6,18 +6,17 @@ resource "google_storage_bucket" "source_bucket" {
   uniform_bucket_level_access = true
 }
 
-data "archive_file" "function_source_zip" {
+resource "archive_file" "function_source_zip" {
   type        = "zip"
   source_dir  = var.source_dir
   output_path = "${path.module}/${var.name}.zip"
 }
 
 resource "google_storage_bucket_object" "function_source" {
-  name   = "${var.name}-source#${data.archive_file.function_source_zip.output_md5}.zip"
+  name   = "${var.name}-source#${archive_file.function_source_zip.output_md5}.zip"
   bucket = google_storage_bucket.source_bucket.name
-  source = data.archive_file.function_source_zip.output_path
+  source = archive_file.function_source_zip.output_path
 }
-##########
 
 ########## Cloud Function and necessary permissions
 resource "google_cloudfunctions2_function" "function" {
@@ -47,7 +46,6 @@ resource "google_cloud_run_service_iam_member" "scheduler_invoker" {
   role     = "roles/run.invoker"
   member   = "serviceAccount:${var.service_account_email}"
 }
-##########
 
 ########## Cloud Scheduler Job
 resource "google_cloud_scheduler_job" "job" {
@@ -63,4 +61,3 @@ resource "google_cloud_scheduler_job" "job" {
     }
   }
 }
-##########
