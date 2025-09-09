@@ -17,7 +17,6 @@ resource "google_storage_bucket_object" "function_source" {
   bucket = google_storage_bucket.source_bucket.name
   source = archive_file.function_source_zip.output_path
 }
-##########
 
 ########## Cloud Function and necessary permissions
 resource "google_cloudfunctions2_function" "function" {
@@ -47,7 +46,6 @@ resource "google_cloud_run_service_iam_member" "scheduler_invoker" {
   role     = "roles/run.invoker"
   member   = "serviceAccount:${var.service_account_email}"
 }
-##########
 
 ########## Cloud Scheduler Job
 resource "google_cloud_scheduler_job" "job" {
@@ -63,4 +61,3 @@ resource "google_cloud_scheduler_job" "job" {
     }
   }
 }
-##########
