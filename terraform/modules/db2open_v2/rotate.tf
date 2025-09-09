@@ -1,5 +1,5 @@
 module "rotate_function" {
-  source                = "git::https://github.com/kartverket/dask-modules//terraform/modules/cloud_function_v2?ref=bdb6978d09481bb5b02913e4ff2585ee67dbe56f"
+  source                = "git::https://github.com/kartverket/dask-modules//terraform/modules/cloud_function_v2?ref=v3.4.0"
   name                  = "rotate-${var.share_name}"
   project_id            = var.google_cloud_project
   region                = var.region
