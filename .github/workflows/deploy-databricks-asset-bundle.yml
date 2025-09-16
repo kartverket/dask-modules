@@ -50,6 +50,11 @@ on:
         required: false
         default: false
         type: boolean
+      force_deploy:
+        description: "Use the --force flag when deploying the Databricks Asset Bundle."
+        required: false
+        default: false
+        type: boolean
 
 env:
   WORKLOAD_IDENTITY_PROVIDER_OVERRIDE: ${{ inputs.workload_identity_provider_override }}
@@ -132,7 +137,11 @@ jobs:
         env:
           GOOGLE_CREDENTIALS: "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}"
         run: |
-          databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --auto-approve
+          FORCE_FLAG=""
+          if [[ "${{ inputs.force_deploy }}" == "true" ]]; then
+            FORCE_FLAG="--force"
+          fi
+          databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --auto-approve $FORCE_FLAG
 
       - name: Destroy Databricks Bundle
         if: inputs.destroy_bundle == true && inputs.environment != 'prod'
