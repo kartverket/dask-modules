@@ -31,6 +31,9 @@ jobs:
     name: Notify task completion to the onboarding PubSub-topic
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Set vars
         id: set-output
         run: |
