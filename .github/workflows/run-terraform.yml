@@ -7,6 +7,11 @@ on:
         description: "If this is not set, terraform apply runs on a push event to `main`. This flag (true/false) can override this behaviour (e.g. when run from a pull request)."
         required: false
         type: string
+      terraform_version:
+        description: "The version of Terraform to use. Example: 1.6.6"
+        required: false
+        type: string
+        default: "latest"
       comment_on_pr:
         description: "Should a Terraform plan comment be generated for the PR? [true/false] Requires 'pull-requests: write'"
         required: false
@@ -115,6 +120,12 @@ jobs:
       WORKLOAD_IDENTITY_PROVIDER: ${{ needs.setup-env.outputs.WORKLOAD_IDENTITY_PROVIDER }}
 
     steps:
+      - uses: octo-sts/action@a26b0c6455c7f13316f29a8766287f939e75f6c8 # v1.0.2
+        id: octo-sts
+        with:
+          scope: kartverket
+          identity: kartverket_repos
+
       # Checkout the repository to the GitHub Actions runner
       - name: Checkout
         uses: actions/checkout@v4
@@ -133,11 +144,19 @@ jobs:
           echo TF_CLI_ARGS_plan="$TF_CLI_ARGS_plan" >> "$GITHUB_ENV"
           echo TF_CLI_ARGS_apply="$TF_CLI_ARGS_plan" >> "$GITHUB_ENV"
 
-      # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
-      - name: Terraform Setup
-        uses: kartverket/actions/terraform/setup@v0.2.0
+      - name: Hack for github internal repo access
+        run: git config --global url."https://x-access-token:${{ steps.octo-sts.outputs.token }}@github.com".insteadOf ssh://git@github.com
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
         with:
-          path: ${{ env.WORKING_DIRECTORY }}
+          terraform_version: ${{ inputs.terraform_version }}
+
+      - name: Initilize Terraform
+        id: init
+        shell: bash
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: terraform init
 
       - name: Terraform Validate
         uses: kartverket/actions/terraform/validate@v0.2.0
