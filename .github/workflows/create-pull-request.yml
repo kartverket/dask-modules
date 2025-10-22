@@ -162,7 +162,7 @@ jobs:
 
   send_success_message_to_pubsub:
     needs: create_pull_request
-    uses: ./.github/workflows/publish-onboarding-message.yml
+    uses: ./.github/workflows/publish-message-pubsub.yml
     permissions:
       id-token: write
     with:
