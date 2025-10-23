@@ -71,7 +71,6 @@ env:
   DATABRICKS_BUNDLE_TARGET: ${{ inputs.bundle_target }}
   PYTHON_VERSION: ${{ inputs.python_version }}
   COMPUTE_ACCOUNT: ${{ inputs.databricks_compute_sa }}
-  DEPLOY_BUNDLE: ${{ inputs.destroy_bundle == false && inputs.validate_only == false }}
   DATABRICKS_AUTH_TYPE: google-credentials
 
 jobs:
@@ -130,17 +129,17 @@ jobs:
           databricks bundle validate --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
 
       - name: Setup Python
-        if: ${{ env.DEPLOY_BUNDLE }}
+        if: inputs.destroy_bundle == false && inputs.validate_only == false
         uses: actions/setup-python@v5.6.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Python Poetry Action
-        if: ${{ env.DEPLOY_BUNDLE }}
+        if: inputs.destroy_bundle == false && inputs.validate_only == false
         uses: abatilo/actions-poetry@v4.0.0
 
       - name: Deploy Databricks Asset Bundle yaml
-        if: ${{ env.DEPLOY_BUNDLE }}
+        if: inputs.destroy_bundle == false && inputs.validate_only == false
         env:
           GOOGLE_CREDENTIALS: "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}"
         run: |
