@@ -122,24 +122,24 @@ jobs:
         name: Setup databricks CLI
 
       - name: Validate Databricks Asset Bundle yaml
-        if: inputs.destroy_bundle == false
+        if: ${{ !inputs.destroy_bundle }}
         env:
           GOOGLE_CREDENTIALS: "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}"
         run: |
           databricks bundle validate --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
 
       - name: Setup Python
-        if: inputs.destroy_bundle == false && inputs.validate_only == false
+        if: ${{ !inputs.destroy_bundle && !inputs.validate_only }}
         uses: actions/setup-python@v5.6.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Python Poetry Action
-        if: inputs.destroy_bundle == false && inputs.validate_only == false
+        if: ${{ !inputs.destroy_bundle && !inputs.validate_only }}
         uses: abatilo/actions-poetry@v4.0.0
 
       - name: Deploy Databricks Asset Bundle yaml
-        if: inputs.destroy_bundle == false && inputs.validate_only == false
+        if: ${{ !inputs.destroy_bundle && !inputs.validate_only }}
         env:
           GOOGLE_CREDENTIALS: "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}"
         run: |
@@ -150,7 +150,7 @@ jobs:
           databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --auto-approve $FORCE_FLAG
 
       - name: Destroy Databricks Bundle
-        if:  inputs.destroy_bundle == false && inputs.validate_only == false && inputs.environment != 'prod'
+        if: ${{ !inputs.destroy_bundle && !inputs.validate_only && inputs.environment != 'prod' }}
         env:
           GOOGLE_CREDENTIALS: "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}"
         run: |
