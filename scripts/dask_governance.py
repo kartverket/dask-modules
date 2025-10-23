@@ -20,7 +20,7 @@ module "checks_per_team_{team}" {{
 
 def edit_file(file_path, params: dict):
     division: str = params.get("area_name")
-    team: str = params.get("team")
+    team: str = params.get("project_name")
 
     module_content = generate_checks_per_team_module(division, team)
 
