@@ -150,7 +150,7 @@ jobs:
           databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --auto-approve $FORCE_FLAG
 
       - name: Destroy Databricks Bundle
-        if: ${{ !inputs.destroy_bundle && !inputs.validate_only && inputs.environment != 'prod' }}
+        if: ${{ inputs.destroy_bundle && !inputs.validate_only && inputs.environment != 'prod' }}
         env:
           GOOGLE_CREDENTIALS: "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}"
         run: |
