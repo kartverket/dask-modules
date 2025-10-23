@@ -83,7 +83,6 @@ jobs:
         id: set-output
         run: |
           PRODUCT_NAME=${DEPLOY_ACCOUNT//-deploy*/}
-          echo "$PRODUCT_NAME"
           DEFAULT_WORKLOAD_IDENTITY="projects/$AUTH_PROJECT_NUMBER/locations/global/workloadIdentityPools/$PRODUCT_NAME-deploy-pool/providers/github-provider"
           OVERRIDE=$WORKLOAD_IDENTITY_PROVIDER_OVERRIDE
           PROVIDER=${OVERRIDE:-$DEFAULT_WORKLOAD_IDENTITY}
