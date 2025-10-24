@@ -46,7 +46,7 @@ on:
         default: "3.11.11"
         type: string
       validate_only:
-        description: "Validate bundle, but do not deploy"
+        description: "Validate bundle, but do not deploy or destroy"
         required: false
         default: false
         type: boolean
