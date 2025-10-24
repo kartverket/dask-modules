@@ -45,6 +45,11 @@ on:
         required: false
         default: "3.11.11"
         type: string
+      validate_only:
+        description: "Validate bundle, but do not deploy or destroy"
+        required: false
+        default: false
+        type: boolean
       destroy_bundle:
         description: "Should Databricks Asset Bundle be destroyed?"
         required: false
@@ -77,11 +82,11 @@ jobs:
       - name: Set vars
         id: set-output
         run: |
-          PRODUCT_NAME=$(echo $DEPLOY_ACCOUNT | sed 's/-deploy.*//')
+          PRODUCT_NAME=${DEPLOY_ACCOUNT//-deploy*/}
           DEFAULT_WORKLOAD_IDENTITY="projects/$AUTH_PROJECT_NUMBER/locations/global/workloadIdentityPools/$PRODUCT_NAME-deploy-pool/providers/github-provider"
           OVERRIDE=$WORKLOAD_IDENTITY_PROVIDER_OVERRIDE
           PROVIDER=${OVERRIDE:-$DEFAULT_WORKLOAD_IDENTITY}
-          echo "WORKLOAD_IDENTITY_PROVIDER=$PROVIDER" >> $GITHUB_OUTPUT
+          echo "WORKLOAD_IDENTITY_PROVIDER=$PROVIDER" >> "$GITHUB_OUTPUT"
   deploy_databricks:
     needs: [setup-env]
     name: Databricks deploy to ${{ inputs.environment }}
@@ -116,24 +121,24 @@ jobs:
         name: Setup databricks CLI
 
       - name: Validate Databricks Asset Bundle yaml
-        if: inputs.destroy_bundle == false
+        if: ${{ !inputs.destroy_bundle }}
         env:
           GOOGLE_CREDENTIALS: "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}"
         run: |
           databricks bundle validate --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
 
       - name: Setup Python
-        if: inputs.destroy_bundle == false
+        if: ${{ !inputs.destroy_bundle && !inputs.validate_only }}
         uses: actions/setup-python@v5.6.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Python Poetry Action
-        if: inputs.destroy_bundle == false
+        if: ${{ !inputs.destroy_bundle && !inputs.validate_only }}
         uses: abatilo/actions-poetry@v4.0.0
 
       - name: Deploy Databricks Asset Bundle yaml
-        if: inputs.destroy_bundle == false
+        if: ${{ !inputs.destroy_bundle && !inputs.validate_only }}
         env:
           GOOGLE_CREDENTIALS: "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}"
         run: |
@@ -144,7 +149,7 @@ jobs:
           databricks bundle deploy --target "${{ env.DATABRICKS_BUNDLE_TARGET }}" --auto-approve $FORCE_FLAG
 
       - name: Destroy Databricks Bundle
-        if: inputs.destroy_bundle == true && inputs.environment != 'prod'
+        if: ${{ inputs.destroy_bundle && !inputs.validate_only && inputs.environment != 'prod' }}
         env:
           GOOGLE_CREDENTIALS: "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}"
         run: |
