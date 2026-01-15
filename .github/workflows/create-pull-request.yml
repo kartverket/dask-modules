@@ -147,19 +147,6 @@ jobs:
             console.log('Pull Request created: ', response.data.html_url);
             core.setOutput('pullRequestUrl', response.data.html_url);
 
-      - name: Publish Pull Request URL to Firestore
-        if: env.SHOULD_CREATE_PR == 'true' && steps.create_pr.outputs.pullRequestUrl && env.SCRIPT != 'entra_id_config.py'
-        working-directory: current-repo
-        run: |
-          echo "Pull request URL: ${{ steps.create_pr.outputs.pullRequestUrl }}"
-          pip install google-cloud-firestore
-          python scripts/publish_to_firestore.py
-        env:
-          GCP_PROJECT_ID: ${{ env.GCP_PROJECT_ID }}
-          PULL_REQUEST_URL: ${{ steps.create_pr.outputs.pullRequestUrl }}
-          TEAM_NAME: ${{ env.TEAM_NAME }}
-          STEP_ID: ${{ env.STEP_ID }}
-
   send_success_message_to_pubsub:
     needs: create_pull_request
     uses: ./.github/workflows/publish-message-pubsub.yml
