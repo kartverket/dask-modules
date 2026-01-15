@@ -1,6 +1,27 @@
 import json
 import sys
-from common import append_content_to_end_of_file, is_content_in_file
+import textwrap
+from typing import List
+
+
+def is_content_in_file(file_path: str, content: str) -> bool:
+    with open(file_path) as file:
+        file_content = file.read()
+        return file_content.find(content) > -1
+
+
+def append_content_to_end_of_file(file_path: str, content: str) -> None:
+    lines: List[str] = []
+    with open(file_path) as file:
+        lines = file.readlines()
+
+    if lines and not lines[-1].endswith('\n'):
+        lines[-1] += '\n'
+
+    lines.append(textwrap.dedent(content) + '\n')
+
+    with open(file_path, 'w') as file:
+        file.writelines(lines)
 
 
 def generate_checks_per_team_module(division: str, team: str) -> str:

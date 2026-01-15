@@ -1,20 +1,37 @@
 import json
 import sys
-from common import replace_special_characters
+import re
+
+
+def replace_special_characters(s):
+    replacements = {
+        'æ': 'ae',
+        'Æ': 'Ae',
+        'ø': 'o',
+        'Ø': 'O',
+        'å': 'aa',
+        'Å': 'Aa'
+    }
+
+    return re.sub(r'[æåÆØÅ]', lambda match: replacements[match.group(0)], s)
+
 
 envs = ["dev", "prod"]
+
 
 def should_keep_line(line: str) -> bool:
     lines_to_keep = ["databricks_workspace_url", "environment"]
     for line_to_keep in lines_to_keep:
         if line_to_keep in line:
             return True
-    
+
     return False
 
-def update_tfvar_file(monorepo_folder_path: str, env: str, project_name: str, project_id: str, project_number: str, area_name: str) -> None:
+
+def update_tfvar_file(monorepo_folder_path: str, env: str, project_name: str, project_id: str, project_number: str,
+                      area_name: str) -> None:
     tfvars_path = f'{monorepo_folder_path}/terraform/variables/{env}.tfvars'
-    
+
     with open(tfvars_path) as file:
         lines = list(filter(should_keep_line, file.readlines()))
         file.close()
@@ -22,7 +39,8 @@ def update_tfvar_file(monorepo_folder_path: str, env: str, project_name: str, pr
         lines.insert(0, f'repo_name = "{project_name.lower()}-data-ingestor"\n')
         lines.insert(0, f'landing_zone_bucket = "landing-zone-{project_id}"\n')
         lines.insert(0, f'compute_service_account = "databricks-compute@{project_id}.iam.gserviceaccount.com"\n')
-        lines.insert(0, f'deploy_service_account = "{project_name.lower()}-deploy@{project_id}.iam.gserviceaccount.com"\n')
+        lines.insert(0,
+                     f'deploy_service_account = "{project_name.lower()}-deploy@{project_id}.iam.gserviceaccount.com"\n')
         lines.insert(0, f'project_number = "{project_number}"\n')
         lines.insert(0, f'project_id = "{project_id}"\n')
         lines.insert(0, f'area_name = "{area_name}"\n')
@@ -43,7 +61,8 @@ def update_databricks_bundle_yml(file_path: str, area_name: str, project_name: s
     config_path = f'{file_path}/databricks.yml'
 
     with open(config_path, 'r') as file:
-        lines = [line.replace("plattform_dataprodukter", f"{area_name.lower()}_{project_name.lower()}") for line in file.readlines()]
+        lines = [line.replace("plattform_dataprodukter", f"{area_name.lower()}_{project_name.lower()}") for line in
+                 file.readlines()]
         file.close()
 
         with open(config_path, 'w') as file:
@@ -53,7 +72,7 @@ def update_databricks_bundle_yml(file_path: str, area_name: str, project_name: s
 
 def clear_codeowners(file_path: str, team_name: str):
     codeowners_path = f'{file_path}/CODEOWNERS'
-    
+
     with open(codeowners_path, 'r') as file:
         file_content = file.read()
         file_content = file_content.replace("Team DASK (Dataplattform Statens Kartverk)", f"Team {team_name}")
@@ -106,14 +125,14 @@ def configure_github_deploy_workflow(file_path: str, env: str, project_name: str
         (repo_to_replace, f'{project_name.lower()}-data-ingestor'),
         (project_name_to_replace, project_name.lower()),
     ]
-    
+
     with open(f'{workflows_path}/deploy-{env}.yml') as file:
         lines = file.readlines()
         file.close()
-        
+
         for replacement in replacement_tuples:
             lines = [line.replace(replacement[0], replacement[1]) for line in lines]
-    
+
         with open(f'{workflows_path}/deploy-{env}.yml', 'w') as file:
             file.writelines(lines)
             file.close()
@@ -150,4 +169,3 @@ if __name__ == "__main__":
     json_obj = json.loads(json_str)
 
     edit_file(file_path, json_obj)
-
