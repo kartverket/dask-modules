@@ -1,4 +1,5 @@
 name: Deploy Databricks notebooks
+# Brukes av ingestor-repo for deploy av DAB
 
 on:
   workflow_call:
