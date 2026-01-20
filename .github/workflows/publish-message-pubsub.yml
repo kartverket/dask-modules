@@ -1,0 +1,63 @@
+name: Publish message to PubSub onboarding topic
+
+on:
+  workflow_call:
+    inputs:
+      service_account:
+        description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
+        required: true
+        type: string
+      auth_project_number:
+        description: "The GCP Project Number used for authentication. A 12-digit number used as a unique identifier for the project. Used to find workload identity pool."
+        required: true
+        type: string
+      team_name:
+        description: "The unique name representing the team that is undergoing the onboarding process to DASK."
+        required: true
+        type: string
+      step_id:
+        description: "The step id to notify completion for to the pub sub onboarding topic."
+        required: true
+        type: string
+      params:
+        description: "The params appended to by each step of the onboarding flow."
+        required: false
+        type: string
+        default: "null"
+
+env:
+  AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
+  SERVICE_ACCOUNT: ${{ inputs.service_account }}
+  TEAM_NAME: ${{ inputs.team_name }}
+  STEP_ID: ${{ inputs.step_id }}
+  PARAMS: ${{ inputs.params }}
+  PUBSUB_TOPIC: onboarding_topic
+
+jobs:
+  publish_message_to_pubsub_onboarding_topic:
+    name: Notify task completion to the onboarding PubSub-topic
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set vars
+        id: set-output
+        run: |
+          PRODUCT_NAME=$(echo $SERVICE_ACCOUNT | sed 's/-deploy.*//')
+          DEFAULT_WORKLOAD_IDENTITY="projects/$AUTH_PROJECT_NUMBER/locations/global/workloadIdentityPools/$PRODUCT_NAME-deploy-pool/providers/github-provider"
+          OVERRIDE=$WORKLOAD_IDENTITY_PROVIDER_OVERRIDE
+          PROVIDER=${OVERRIDE:-$DEFAULT_WORKLOAD_IDENTITY}
+          echo "WORKLOAD_IDENTITY_PROVIDER=$PROVIDER" >> $GITHUB_OUTPUT
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ steps.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v2"
+        with:
+          version: ">= 363.0.0"
+
+      - name: Add message to PubSub topic
+        run: |
+          gcloud pubsub topics publish ${{ env.PUBSUB_TOPIC }} --message='{ "team_name": "${{ env.TEAM_NAME }}", "step": "${{ env.STEP_ID }}", "params": ${{ env.PARAMS }} }'

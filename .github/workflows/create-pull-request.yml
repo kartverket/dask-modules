@@ -3,16 +3,56 @@ name: Create pull request to repository
 on:
   workflow_dispatch:
     inputs:
+      should_create_pr:
+        description: "Should create pull request"
+        required: true
+        type: boolean
+      target_repo:
+        description: "Repository to create pull request for"
+        required: true
+        type: string
+      file_to_modify_path:
+        description: "File to modify"
+        required: true
+        type: string
+      script:
+        description: "Script to run"
+        required: true
+        type: string
       script_params:
         description: "Parameters to use in the script"
+        required: false
+      step_id:
+        description: "The step ID for the current step. Should match what the script does."
         required: true
-      team_short_name:
+        type: string
+      team_name:
+        description: "The team name used to create the data-ingestor repo"
+        required: true
+        type: string
+      project_name:
         description: "The project name used to create the data-ingestor repo"
+        required: true
+        type: string
+      service_account:
+        description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
+        required: true
+        type: string
+      auth_project_number:
+        description: "The GCP Project Number used for authentication. A 12-digit number used as a unique identifier for the project. Used to find workload identity pool."
         required: true
         type: string
 
 env:
+  SHOULD_CREATE_PR: ${{ inputs.should_create_pr }}
+  TARGET_REPO: ${{ inputs.target_repo }}
+  FILE_TO_MODIFY_PATH: ${{ inputs.file_to_modify_path }}
+  SCRIPT: ${{ inputs.script }}
   SCRIPT_PARAMS: ${{ inputs.script_params }}
+  STEP_ID: ${{ inputs.step_id }} # Must match step-id in dask-onboarding-service
+  AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
+  SERVICE_ACCOUNT: ${{ inputs.service_account }}
+  TEAM_NAME: ${{ inputs.team_name }} # Lowercase-name-for-team
   PROJECT_NAME: ${{ inputs.project_name }}
 
 jobs:
@@ -35,8 +75,8 @@ jobs:
       - name: Set vars
         id: set-output
         run: |
-          PRODUCT_NAME=$(echo ${{ secrets.GCP_SERVICE_ACCOUNT }} | sed 's/-deploy.*//')
-          DEFAULT_WORKLOAD_IDENTITY="projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/$PRODUCT_NAME-deploy-pool/providers/github-provider"
+          PRODUCT_NAME=$(echo $SERVICE_ACCOUNT | sed 's/-deploy.*//')
+          DEFAULT_WORKLOAD_IDENTITY="projects/$AUTH_PROJECT_NUMBER/locations/global/workloadIdentityPools/$PRODUCT_NAME-deploy-pool/providers/github-provider"
           OVERRIDE=$WORKLOAD_IDENTITY_PROVIDER_OVERRIDE
           PROVIDER=${OVERRIDE:-$DEFAULT_WORKLOAD_IDENTITY}
           echo "WORKLOAD_IDENTITY_PROVIDER=$PROVIDER" >> $GITHUB_OUTPUT
@@ -45,7 +85,7 @@ jobs:
         uses: google-github-actions/auth@v1
         with:
           workload_identity_provider: ${{ steps.set-output.outputs.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
           export_environment_variables: true
           create_credentials_file: true
 
@@ -65,13 +105,15 @@ jobs:
       - name: Modify files
         working-directory: current-repo
         run: |
-          python scripts/data_ingestor_update.py --payload '${{ env.SCRIPT_PARAMS }}'
+          python scripts/${{ env.SCRIPT }} '../target-repo/${{ env.FILE_TO_MODIFY_PATH }}' '${{ env.SCRIPT_PARAMS }}'
 
       - name: Format Terraform Files
+        if: env.SHOULD_CREATE_PR == 'true'
         working-directory: target-repo
         run: terraform fmt -recursive
 
       - name: Commit and Push to target repository
+        if: env.SHOULD_CREATE_PR == 'true'
         working-directory: target-repo
         run: |
           HASH=$(date +%s | sha256sum | head -c 4)
@@ -87,6 +129,7 @@ jobs:
 
       - name: Create Pull Request
         id: create_pr
+        if: env.SHOULD_CREATE_PR == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.octo-sts.outputs.token }}
@@ -103,3 +146,15 @@ jobs:
 
             console.log('Pull Request created: ', response.data.html_url);
             core.setOutput('pullRequestUrl', response.data.html_url);
+
+  send_success_message_to_pubsub:
+    needs: create_pull_request
+    uses: ./.github/workflows/publish-message-pubsub.yml
+    permissions:
+      id-token: write
+    with:
+      auth_project_number: ${{ inputs.auth_project_number }}
+      service_account: ${{ inputs.service_account }}
+      team_name: ${{ inputs.team_name }}
+      step_id: ${{ inputs.step_id }}
+      params: ${{ inputs.script_params }}
