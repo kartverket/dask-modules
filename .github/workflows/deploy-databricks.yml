@@ -1,4 +1,5 @@
 name: Deploy Databricks notebooks
+# Brukes av legacy ingestor-repoer til produktteam som ikke har oppgradert til DAB
 
 on:
   workflow_call:
