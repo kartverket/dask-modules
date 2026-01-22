@@ -1,4 +1,5 @@
 name: Create empty GitHub repo and clone monorepo into it
+
 on:
   repository_dispatch:
     types: [onboarding]
@@ -97,6 +98,6 @@ jobs:
     permissions:
       id-token: write
     with:
-      target_repo: ${{ env.TARGET_REPO }}
-      team_short_name: ${{ env.TEAM_SHORT_NAME }}
-      script_params: ${{ env.SCRIPT_PARAMS }}
+      target_repo: ${{ github.event.client_payload.target_repo }}
+      team_short_name: ${{ github.event.client_payload.team_short_name }}
+      script_params: ${{ github.event.client_payload.script_params }}
