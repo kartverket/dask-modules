@@ -12,8 +12,8 @@ on:
         type: string
 
 env:
+  TEAM_SHORT_NAME: ${{ inputs.team_short_name }}
   SCRIPT_PARAMS: ${{ inputs.script_params }}
-  PROJECT_NAME: ${{ inputs.project_name }}
 
 jobs:
   create_pull_request:
@@ -75,7 +75,7 @@ jobs:
         working-directory: target-repo
         run: |
           HASH=$(date +%s | sha256sum | head -c 4)
-          BRANCH_NAME="dask-onboarding-ci-${{ env.PROJECT_NAME }}-${HASH}"
+          BRANCH_NAME="dask-onboarding-ci-${{ env.TEAM_SHORT_NAME }}-${HASH}"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
           git config --global user.name "DASK CI"
