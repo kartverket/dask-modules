@@ -18,7 +18,6 @@ on:
 
 env:
   TEAM_SHORT_NAME: ${{ inputs.team_short_name }}
-  SCRIPT_PARAMS: ${{ inputs.script_params }}
   TARGET_REPO: ${{ inputs.target_repo }}
 
 jobs:
@@ -71,7 +70,7 @@ jobs:
       - name: Modify files
         working-directory: current-repo
         run: |
-          python scripts/data_ingestor_update.py --payload '${{ env.SCRIPT_PARAMS }}'
+          python scripts/data_ingestor_update.py --payload '${{ inputs.script_params }}'
 
       - name: Format Terraform Files
         working-directory: target-repo
