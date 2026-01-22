@@ -6,9 +6,7 @@ on:
 
 env:
   TARGET_REPO: ${{ github.event.client_payload.target_repo }}
-  TEAM_SHORT_NAME: ${{ github.event.client_payload.team_short_name }}
   GITHUB_TEAM_NAME: ${{ github.event.client_payload.github_team_name }}
-  SCRIPT_PARAMS: ${{ github.event.client_payload.script_params }}
 
 jobs:
   create_and_clone_repo:
@@ -47,24 +45,23 @@ jobs:
           script: |
             const repoName = '${{ env.TARGET_REPO }}';
             const teamSlug = 'dask';
-            const response = await github.rest.teams.addOrUpdateRepoPermissionsInOrg({
+            const response_dask = await github.rest.teams.addOrUpdateRepoPermissionsInOrg({
               org: 'kartverket',
               team_slug: teamSlug,
               owner: 'kartverket',
               repo: repoName,
               permission: 'admin'
             });
-            console.log(`Added DASK team to ${repoName}:`, response.status);
+            console.log(`Added DASK team to ${repoName}:`, response_dask.status);
 
-            teamSlug = '${{ env.GITHUB_TEAM_NAME }}'
-            response = await github.rest.teams.addOrUpdateRepoPermissionsInOrg({
+            const response_team = await github.rest.teams.addOrUpdateRepoPermissionsInOrg({
               org: 'kartverket',
-              team_slug: teamSlug,
+              team_slug: '${{ env.GITHUB_TEAM_NAME }}',
               owner: 'kartverket',
               repo: repoName,
               permission: 'admin'
             });
-            console.log(`Added ${teamSlug} to ${repoName}:`, response.status);
+            console.log(`Added ${{ env.GITHUB_TEAM_NAME }} to ${repoName}:`, response_team.status);
 
       - name: Get octo-sts token for the template repo
         uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f
