@@ -3,6 +3,10 @@ name: Create pull request to repository
 on:
   workflow_dispatch:
     inputs:
+      target_repo:
+        description: "Name of the repo the reference setup is cloned to"
+        required: true
+        type: string
       script_params:
         description: "Parameters to use in the script"
         required: true
@@ -14,6 +18,7 @@ on:
 env:
   TEAM_SHORT_NAME: ${{ inputs.team_short_name }}
   SCRIPT_PARAMS: ${{ inputs.script_params }}
+  TARGET_REPO: ${{ inputs.target_repo }}
 
 jobs:
   create_pull_request:
@@ -25,7 +30,7 @@ jobs:
         id: octo-sts
         with:
           scope: kartverket/${{ env.TARGET_REPO }}
-          identity: "dask-modules"
+          identity: dask-modules
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2.0.3
@@ -94,7 +99,7 @@ jobs:
 
             const response = await github.rest.pulls.create({
               owner: 'kartverket',
-              repo: process.env.TARGET_REPO,
+              repo: ${{ env.TARGET_REPO }},
               title: 'Add new team from DASK CI workflow',
               head: process.env.BRANCH_NAME,
               base: 'main',

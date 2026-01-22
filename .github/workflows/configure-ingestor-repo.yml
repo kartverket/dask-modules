@@ -4,8 +4,8 @@ on:
     types: [onboarding]
 
 env:
+  TARGET_REPO: ${{ github.event.client_payload.target_repo }}
   TEAM_SHORT_NAME: ${{ github.event.client_payload.team_short_name }}
-  REPO_NAME: ${{ github.event.client_payload.team_short_name }}-data-ingestor
   SCRIPT_PARAMS: ${{ github.event.client_payload.script_params }}
 
 jobs:
@@ -26,7 +26,7 @@ jobs:
         with:
           github-token: ${{ steps.github_app.outputs.token }}
           script: |
-            const repoName = '${{ env.REPO_NAME }}';
+            const repoName = '${{ env.TARGET_REPO }}';
             const response = await github.request('POST /orgs/{org}/repos', {
                 org: 'kartverket',
                 name: repoName,
@@ -43,7 +43,7 @@ jobs:
         with:
           github-token: ${{ steps.github_app.outputs.token }}
           script: |
-            const repoName = '${{ env.REPO_NAME }}';
+            const repoName = '${{ env.TARGET_REPO }}';
             const teamSlug = 'dask';
             const response = await github.rest.teams.addOrUpdateRepoPermissionsInOrg({
               org: 'kartverket',
@@ -77,7 +77,7 @@ jobs:
           git add .
           git commit -m "Initial commit"
           git branch -M main
-          git remote add origin https://x-access-token:${{ steps.github_app.outputs.token }}@github.com/kartverket/${{ env.REPO_NAME }}.git
+          git remote add origin https://x-access-token:${{ steps.github_app.outputs.token }}@github.com/kartverket/${{ env.TARGET_REPO }}.git
           git push -u origin main
 
   configure-repo:
@@ -86,5 +86,6 @@ jobs:
     permissions:
       id-token: write
     with:
+      target_repo: ${{ env.TARGET_REPO }}
       team_short_name: ${{ env.TEAM_SHORT_NAME }}
       script_params: ${{ env.SCRIPT_PARAMS }}
