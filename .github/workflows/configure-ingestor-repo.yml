@@ -57,7 +57,7 @@ jobs:
             console.log(`Added DASK team to ${repoName}:`, response.status);
 
             teamSlug = ${{ env.GITHUB_TEAM_NAME }}
-            const response = await github.rest.teams.addOrUpdateRepoPermissionsInOrg({
+            response = await github.rest.teams.addOrUpdateRepoPermissionsInOrg({
               org: 'kartverket',
               team_slug: teamSlug,
               owner: 'kartverket',
