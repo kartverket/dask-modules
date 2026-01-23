@@ -96,7 +96,7 @@ def update_catalog_info(team_short_name: str):
     with open(cataloginfo_path, 'r') as file:
         file_content = file.read()
         file_content = file_content.replace("dask-monorepo-reference-setup", f'{team_short_name}-data-ingestor')
-        file_content = file_content.replace("documentation", "dask jobs")
+        file_content = file_content.replace("documentation", "ops")
         file_content = file_content.replace("dataplattform", team_short_name)
         file.close()
 
