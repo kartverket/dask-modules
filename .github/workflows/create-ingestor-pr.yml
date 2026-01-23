@@ -35,6 +35,7 @@ env:
   TEAM_SHORT_NAME: ${{ inputs.team_short_name }}
   TARGET_REPO: ${{ inputs.target_repo }}
   PUBSUB_TOPIC: projects/dataplattform-prod-9b1d/topics/onboarding_organization_topic
+  TARGET_REPO_PATH: target-repo
 
 jobs:
   create_pull_request:
@@ -65,10 +66,10 @@ jobs:
           repository: kartverket/${{ env.TARGET_REPO }}
           ref: main
           token: ${{ steps.octo-sts.outputs.token }}
-          path: "target-repo"
+          path: ${{ env.TARGET_REPO_PATH }}
 
       - name: Modify files
-        working-directory: current-repo
+        working-directory: ${{ env.TARGET_REPO_PATH }}
         run: |
           python scripts/data_ingestor_update.py --payload '${{ inputs.script_params }}'
 
