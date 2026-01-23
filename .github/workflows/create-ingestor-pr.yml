@@ -1,6 +1,21 @@
 name: Create pull request to repository
 
 on:
+  workflow_dispatch:
+    inputs:
+      target_repo:
+        description: "Name of the repo the reference setup is cloned to"
+        required: true
+        type: string
+      script_params:
+        description: "Parameters to use in the script"
+        type: string
+        required: true
+      team_short_name:
+        description: "The project name used to create the data-ingestor repo"
+        required: true
+        type: string
+
   workflow_call:
     inputs:
       target_repo:
