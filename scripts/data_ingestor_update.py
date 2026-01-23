@@ -16,7 +16,6 @@ def replace_special_characters(s):
     return re.sub(r'[æåÆØÅ]', lambda match: replacements[match.group(0)], s)
 
 
-FILE_PATH = "../"
 envs = ["dev", "prod"]
 
 
@@ -36,7 +35,7 @@ def update_tfvar_file(
         project_number: str,
         area_name: str,
 ) -> None:
-    tfvars_path = f'{FILE_PATH}/terraform/variables/{env}.tfvars'
+    tfvars_path = f'terraform/variables/{env}.tfvars'
 
     with open(tfvars_path) as file:
         lines = list(filter(should_keep_line, file.readlines()))
@@ -58,13 +57,13 @@ def update_tfvar_file(
 
 
 def update_state_bucket(env: str, val_for_env: str) -> None:
-    with open(f'{FILE_PATH}/terraform/backend/{env}.gcs.tfbackend', 'w') as file:
+    with open(f'terraform/backend/{env}.gcs.tfbackend', 'w') as file:
         file.write(f'bucket = "{val_for_env}"\n')
         file.close()
 
 
 def update_databricks_bundle_yml(area_name: str, project_name: str):
-    config_path = f'{FILE_PATH}/databricks.yml'
+    config_path = 'databricks.yml'
 
     with open(config_path, 'r') as file:
         lines = [line.replace("plattform_dataprodukter", f"{area_name.lower()}_{project_name.lower()}") for line in
@@ -77,7 +76,7 @@ def update_databricks_bundle_yml(area_name: str, project_name: str):
 
 
 def update_codeowners(team_name: str, github_team_name: str):
-    codeowners_path = f'{FILE_PATH}/CODEOWNERS'
+    codeowners_path = 'CODEOWNERS'
 
     with open(codeowners_path, 'r') as file:
         file_content = file.read()
@@ -92,7 +91,7 @@ def update_codeowners(team_name: str, github_team_name: str):
 
 
 def update_catalog_info(team_short_name: str):
-    cataloginfo_path = f'{FILE_PATH}/catalog-info.yaml'
+    cataloginfo_path = 'catalog-info.yaml'
 
     with open(cataloginfo_path, 'r') as file:
         file_content = file.read()
@@ -107,7 +106,7 @@ def update_catalog_info(team_short_name: str):
 
 
 def configure_github_deploy_workflow(env: str, project_name: str, project_id: str, project_number: str):
-    workflows_path = f'{FILE_PATH}/.github/workflows'
+    workflows_path = '.github/workflows'
 
     deploy_sa_to_replace = {
         "dev": "dataplattform-deploy@dataprodukter-dev-5daa.iam.gserviceaccount.com",

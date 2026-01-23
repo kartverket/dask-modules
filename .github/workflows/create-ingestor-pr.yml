@@ -65,10 +65,10 @@ jobs:
           repository: kartverket/${{ env.TARGET_REPO }}
           ref: main
           token: ${{ steps.octo-sts.outputs.token }}
-          path: "target-repo"
+          path: target-repo
 
       - name: Modify files
-        working-directory: current-repo
+        working-directory: target-repo
         run: |
           python scripts/data_ingestor_update.py --payload '${{ inputs.script_params }}'
 
