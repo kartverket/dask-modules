@@ -57,7 +57,7 @@ jobs:
       - name: Checkout current repository
         uses: actions/checkout@v4
         with:
-          path: "current-repo"
+          path: dask-modules
 
       - name: Checkout target repository
         uses: actions/checkout@v4
@@ -70,7 +70,7 @@ jobs:
       - name: Modify files
         working-directory: target-repo
         run: |
-          python scripts/data_ingestor_update.py --payload '${{ inputs.script_params }}'
+          python ../dask-modules/scripts/data_ingestor_update.py --payload '${{ inputs.script_params }}'
 
       - name: Format Terraform Files
         working-directory: target-repo
