@@ -110,6 +110,8 @@ jobs:
 
   publish-teams-output-to-pubsub:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     needs:
       - create_pull_request
     steps:
