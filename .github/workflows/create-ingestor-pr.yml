@@ -99,8 +99,8 @@ jobs:
 
             const response = await github.rest.pulls.create({
               owner: 'kartverket',
-              repo: ${{ env.TARGET_REPO }},
-              title: 'Add new team from DASK CI workflow',
+              repo: '${{ env.TARGET_REPO }}',
+              title: 'Konfigurer repo for ${{ env.TEAM_SHORT_NAME }}',
               head: process.env.BRANCH_NAME,
               base: 'main',
               draft: true
