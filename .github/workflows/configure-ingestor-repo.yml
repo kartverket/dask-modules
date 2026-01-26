@@ -6,6 +6,7 @@ on:
 
 env:
   TARGET_REPO: ${{ github.event.client_payload.target_repo }}
+  TEAM_NAME: ${{ github.event.client_payload.script_params.name }}
   GITHUB_TEAM_NAME: ${{ github.event.client_payload.github_team_name }}
 
 jobs:
@@ -30,7 +31,7 @@ jobs:
             const response = await github.request('POST /orgs/{org}/repos', {
                 org: 'kartverket',
                 name: repoName,
-                description: 'This is your first repository',
+                description: 'data-ingestor-repo for team ${{ env.TEAM_NAME }}. Opprinnelig klonet fra https://github.com/kartverket/dask-monorepo-reference-setup.',
                 visibility: 'internal',
                 headers: {
                   'X-GitHub-Api-Version': '2022-11-28'
