@@ -34,7 +34,6 @@ on:
 env:
   TEAM_SHORT_NAME: ${{ inputs.team_short_name }}
   TARGET_REPO: ${{ inputs.target_repo }}
-  PUBSUB_TOPIC: projects/dataplattform-prod-9b1d/topics/onboarding_organization_topic
 
 jobs:
   create_pull_request:
@@ -132,6 +131,8 @@ jobs:
           version: ">= 363.0.0"
 
       - name: Publish message to Pub/Sub topic
+        env:
+          PUBSUB_TOPIC: projects/onboarding-bf12/topics/onboarding-prod
         run: |
           json_message='{"commit_hash": "${{ github.sha }}", "event_type": "ingestor-configured", "payload": { "team_name": "${{ fromJson(inputs.script_params).name }}" }}'
 
