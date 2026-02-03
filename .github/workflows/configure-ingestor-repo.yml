@@ -96,7 +96,4 @@ jobs:
     permissions:
       id-token: write
     with:
-      target_repo: ${{ github.event.client_payload.target_repo }}
-      resource_name: ${{ github.event.client_payload.resource_name }}
-      script_params: ${{ toJson(github.event.client_payload) }}
-      team_short_name: ${{ github.event.client_payload.team_short_name }}
+      payload: ${{ toJson(github.event.client_payload) }}

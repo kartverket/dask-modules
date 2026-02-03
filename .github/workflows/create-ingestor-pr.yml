@@ -3,45 +3,21 @@ name: Create pull request to repository
 on:
   workflow_dispatch:
     inputs:
-      target_repo:
-        description: "Name of the repo the reference setup is cloned to"
-        required: true
-        type: string
-      script_params:
+      payload:
         description: "Parameters to use in the script"
         type: string
         required: true
-      resource_name:
-        description: "The resource name used to create the data-ingestor repo"
-        required: true
-        type: string
-      team_short_name:
-        description: "The onboarding key for the relevant team, used to pass information back to platform-onboarding"
-        required: true
-        type: string
 
   workflow_call:
     inputs:
-      target_repo:
-        description: "Name of the repo the reference setup is cloned to"
-        required: true
-        type: string
-      script_params:
+      payload:
         description: "Parameters to use in the script"
         type: string
         required: true
-      resource_name:
-        description: "The resource name used to create the data-ingestor repo"
-        required: true
-        type: string
-      team_short_name:
-        description: "The onboarding key for the relevant team, used to pass information back to platform-onboarding"
-        required: true
-        type: string
 
 env:
-  RESOURCE_NAME: ${{ inputs.resource_name }}
-  TARGET_REPO: ${{ inputs.target_repo }}
+  RESOURCE_NAME: ${{ fromJson(inputs.script_params).resource_name }}
+  TARGET_REPO: ${{ fromJson(inputs.script_params).target_repo }}
 
 jobs:
   create_pull_request:
@@ -77,7 +53,7 @@ jobs:
       - name: Modify files
         working-directory: target-repo
         run: |
-          python ../dask-modules/scripts/data_ingestor_update.py --payload '${{ inputs.script_params }}'
+          python ../dask-modules/scripts/data_ingestor_update.py --payload '${{ inputs.payload }}'
 
       - name: Format Terraform Files
         working-directory: target-repo
@@ -141,7 +117,8 @@ jobs:
       - name: Publish message to Pub/Sub topic
         env:
           PUBSUB_TOPIC: projects/onboarding-bf12/topics/onboarding-prod
+          TEAM_SHORT_NAME: ${{ fromJson(inputs.script_params).team_short_name }}
         run: |
-          json_message='{"commit_hash": "${{ github.sha }}", "event_type": "ingestor-configured", "payload": { "team_short_name": "${{ inputs.team_short_name }}" }}'
+          json_message='{"commit_hash": "${{ github.sha }}", "event_type": "ingestor-configured", "payload": { "team_short_name": "${{ env.TEAM_SHORT_NAME }}" }}'
 
           gcloud pubsub topics publish ${{ env.PUBSUB_TOPIC }} --message="$json_message"
