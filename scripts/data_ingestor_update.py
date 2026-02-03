@@ -41,15 +41,15 @@ def update_tfvar_file(
         lines = list(filter(should_keep_line, file.readlines()))
         file.close()
 
-        lines.insert(0, f'repo_name = "{resource_name.lower()}-data-ingestor"\n')
+        lines.insert(0, f'repo_name = "{resource_name}-data-ingestor"\n')
         lines.insert(0, f'landing_zone_bucket = "landing-zone-{project_id}"\n')
         lines.insert(0, f'compute_service_account = "databricks-compute@{project_id}.iam.gserviceaccount.com"\n')
         lines.insert(0,
-                     f'deploy_service_account = "{resource_name.lower()}-deploy@{project_id}.iam.gserviceaccount.com"\n')
+                     f'deploy_service_account = "{resource_name}-deploy@{project_id}.iam.gserviceaccount.com"\n')
         lines.insert(0, f'project_number = "{project_number}"\n')
         lines.insert(0, f'project_id = "{project_id}"\n')
         lines.insert(0, f'area_name = "{division}"\n')
-        lines.insert(0, f'team_name = "{resource_name.lower()}"\n')
+        lines.insert(0, f'team_name = "{resource_name}"\n')
 
         with open(tfvars_path, 'w') as file:
             file.writelines(lines)
@@ -144,7 +144,7 @@ def configure_github_deploy_workflow(env: str, resource_name: str, project_id: s
 
 
 def edit_file(json_obj: dict):
-    resource_name: str = json_obj.get("resource_name").lower()
+    resource_name: str = json_obj.get("resource_name")
     team_name: str = json_obj.get("team_name")
     github_team: str = json_obj.get("github_team")
     division: str = replace_special_characters(json_obj.get("division"))

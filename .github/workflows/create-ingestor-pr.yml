@@ -142,6 +142,6 @@ jobs:
         env:
           PUBSUB_TOPIC: projects/onboarding-bf12/topics/onboarding-prod
         run: |
-          json_message='{"commit_hash": "${{ github.sha }}", "event_type": "ingestor-configured", "payload": { "team_name": "${{ inputs.team_short_name }}" }}'
+          json_message='{"commit_hash": "${{ github.sha }}", "event_type": "ingestor-configured", "payload": { "team_short_name": "${{ inputs.team_short_name }}" }}'
 
           gcloud pubsub topics publish ${{ env.PUBSUB_TOPIC }} --message="$json_message"
