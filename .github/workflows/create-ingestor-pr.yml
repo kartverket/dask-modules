@@ -3,37 +3,21 @@ name: Create pull request to repository
 on:
   workflow_dispatch:
     inputs:
-      target_repo:
-        description: "Name of the repo the reference setup is cloned to"
-        required: true
-        type: string
-      script_params:
+      payload:
         description: "Parameters to use in the script"
         type: string
         required: true
-      team_short_name:
-        description: "The project name used to create the data-ingestor repo"
-        required: true
-        type: string
 
   workflow_call:
     inputs:
-      target_repo:
-        description: "Name of the repo the reference setup is cloned to"
-        required: true
-        type: string
-      script_params:
+      payload:
         description: "Parameters to use in the script"
         type: string
         required: true
-      team_short_name:
-        description: "The project name used to create the data-ingestor repo"
-        required: true
-        type: string
 
 env:
-  TEAM_SHORT_NAME: ${{ inputs.team_short_name }}
-  TARGET_REPO: ${{ inputs.target_repo }}
+  RESOURCE_NAME: ${{ fromJson(inputs.payload).resource_name }}
+  TARGET_REPO: ${{ fromJson(inputs.payload).target_repo }}
 
 jobs:
   create_pull_request:
@@ -69,7 +53,7 @@ jobs:
       - name: Modify files
         working-directory: target-repo
         run: |
-          python ../dask-modules/scripts/data_ingestor_update.py --payload '${{ inputs.script_params }}'
+          python ../dask-modules/scripts/data_ingestor_update.py --payload '${{ inputs.payload }}'
 
       - name: Format Terraform Files
         working-directory: target-repo
@@ -79,7 +63,7 @@ jobs:
         working-directory: target-repo
         run: |
           HASH="$(date +%s | sha256sum | head -c 4)"
-          BRANCH_NAME="dask-onboarding-ci-${{ env.TEAM_SHORT_NAME }}-${HASH}"
+          BRANCH_NAME="dask-onboarding-ci-${{ env.RESOURCE_NAME }}-${HASH}"
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
 
           git config --global user.name "DASK CI"
@@ -99,7 +83,7 @@ jobs:
             const response = await github.rest.pulls.create({
               owner: 'kartverket',
               repo: '${{ env.TARGET_REPO }}',
-              title: 'Konfigurer repo for ${{ env.TEAM_SHORT_NAME }}',
+              title: 'Konfigurer repo for ${{ env.RESOURCE_NAME }}',
               head: process.env.BRANCH_NAME,
               base: 'main'
             });
@@ -133,7 +117,8 @@ jobs:
       - name: Publish message to Pub/Sub topic
         env:
           PUBSUB_TOPIC: projects/onboarding-bf12/topics/onboarding-prod
+          TEAM_SHORT_NAME: ${{ fromJson(inputs.payload).team_short_name }}
         run: |
-          json_message='{"commit_hash": "${{ github.sha }}", "event_type": "ingestor-configured", "payload": { "team_name": "${{ fromJson(inputs.script_params).name }}" }}'
+          json_message='{"commit_hash": "${{ github.sha }}", "event_type": "ingestor-configured", "payload": { "team_short_name": "${{ env.TEAM_SHORT_NAME }}" }}'
 
           gcloud pubsub topics publish ${{ env.PUBSUB_TOPIC }} --message="$json_message"

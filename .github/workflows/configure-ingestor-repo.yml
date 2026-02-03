@@ -6,8 +6,8 @@ on:
 
 env:
   TARGET_REPO: ${{ github.event.client_payload.target_repo }}
-  TEAM_NAME: ${{ github.event.client_payload.script_params.name }}
-  GITHUB_TEAM_NAME: ${{ github.event.client_payload.github_team_name }}
+  TEAM_NAME: ${{ github.event.client_payload.team_name }}
+  GITHUB_TEAM: ${{ github.event.client_payload.github_team }}
 
 jobs:
   create_and_clone_repo:
@@ -57,12 +57,12 @@ jobs:
 
             const response_team = await github.rest.teams.addOrUpdateRepoPermissionsInOrg({
               org: 'kartverket',
-              team_slug: '${{ env.GITHUB_TEAM_NAME }}',
+              team_slug: '${{ env.GITHUB_TEAM }}',
               owner: 'kartverket',
               repo: repoName,
               permission: 'admin'
             });
-            console.log(`Added ${{ env.GITHUB_TEAM_NAME }} to ${repoName}:`, response_team.status);
+            console.log(`Added ${{ env.GITHUB_TEAM }} to ${repoName}:`, response_team.status);
 
       - name: Get octo-sts token for the template repo
         uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f
@@ -96,6 +96,4 @@ jobs:
     permissions:
       id-token: write
     with:
-      target_repo: ${{ github.event.client_payload.target_repo }}
-      team_short_name: ${{ github.event.client_payload.team_short_name }}
-      script_params: ${{ github.event.client_payload.script_params }}
+      payload: ${{ toJson(github.event.client_payload) }}
