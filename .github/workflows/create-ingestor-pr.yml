@@ -16,8 +16,8 @@ on:
         required: true
 
 env:
-  RESOURCE_NAME: ${{ fromJson(inputs.script_params).resource_name }}
-  TARGET_REPO: ${{ fromJson(inputs.script_params).target_repo }}
+  RESOURCE_NAME: ${{ fromJson(inputs.payload).resource_name }}
+  TARGET_REPO: ${{ fromJson(inputs.payload).target_repo }}
 
 jobs:
   create_pull_request:
@@ -117,7 +117,7 @@ jobs:
       - name: Publish message to Pub/Sub topic
         env:
           PUBSUB_TOPIC: projects/onboarding-bf12/topics/onboarding-prod
-          TEAM_SHORT_NAME: ${{ fromJson(inputs.script_params).team_short_name }}
+          TEAM_SHORT_NAME: ${{ fromJson(inputs.payload).team_short_name }}
         run: |
           json_message='{"commit_hash": "${{ github.sha }}", "event_type": "ingestor-configured", "payload": { "team_short_name": "${{ env.TEAM_SHORT_NAME }}" }}'
 

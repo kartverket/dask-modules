@@ -6,7 +6,7 @@ on:
 
 env:
   TARGET_REPO: ${{ github.event.client_payload.target_repo }}
-  TEAM_NAME: ${{ github.event.client_payload.script_params.team_name }}
+  TEAM_NAME: ${{ github.event.client_payload.team_name }}
   GITHUB_TEAM: ${{ github.event.client_payload.github_team }}
 
 jobs:
