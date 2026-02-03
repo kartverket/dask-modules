@@ -11,8 +11,12 @@ on:
         description: "Parameters to use in the script"
         type: string
         required: true
+      resource_name:
+        description: "The resource name used to create the data-ingestor repo"
+        required: true
+        type: string
       team_short_name:
-        description: "The project name used to create the data-ingestor repo"
+        description: "The onboarding key for the relevant team, used to pass information back to platform-onboarding"
         required: true
         type: string
 
@@ -26,13 +30,17 @@ on:
         description: "Parameters to use in the script"
         type: string
         required: true
+      resource_name:
+        description: "The resource name used to create the data-ingestor repo"
+        required: true
+        type: string
       team_short_name:
-        description: "The project name used to create the data-ingestor repo"
+        description: "The onboarding key for the relevant team, used to pass information back to platform-onboarding"
         required: true
         type: string
 
 env:
-  TEAM_SHORT_NAME: ${{ inputs.team_short_name }}
+  RESOURCE_NAME: ${{ inputs.resource_name }}
   TARGET_REPO: ${{ inputs.target_repo }}
 
 jobs:
@@ -79,7 +87,7 @@ jobs:
         working-directory: target-repo
         run: |
           HASH="$(date +%s | sha256sum | head -c 4)"
-          BRANCH_NAME="dask-onboarding-ci-${{ env.TEAM_SHORT_NAME }}-${HASH}"
+          BRANCH_NAME="dask-onboarding-ci-${{ env.RESOURCE_NAME }}-${HASH}"
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
 
           git config --global user.name "DASK CI"
@@ -99,7 +107,7 @@ jobs:
             const response = await github.rest.pulls.create({
               owner: 'kartverket',
               repo: '${{ env.TARGET_REPO }}',
-              title: 'Konfigurer repo for ${{ env.TEAM_SHORT_NAME }}',
+              title: 'Konfigurer repo for ${{ env.RESOURCE_NAME }}',
               head: process.env.BRANCH_NAME,
               base: 'main'
             });
@@ -134,6 +142,6 @@ jobs:
         env:
           PUBSUB_TOPIC: projects/onboarding-bf12/topics/onboarding-prod
         run: |
-          json_message='{"commit_hash": "${{ github.sha }}", "event_type": "ingestor-configured", "payload": { "team_name": "${{ fromJson(inputs.script_params).name }}" }}'
+          json_message='{"commit_hash": "${{ github.sha }}", "event_type": "ingestor-configured", "payload": { "team_name": "${{ inputs.team_short_name }}" }}'
 
           gcloud pubsub topics publish ${{ env.PUBSUB_TOPIC }} --message="$json_message"

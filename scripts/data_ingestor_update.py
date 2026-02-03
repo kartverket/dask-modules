@@ -30,10 +30,10 @@ def should_keep_line(line: str) -> bool:
 
 def update_tfvar_file(
         env: str,
-        project_name: str,
+        resource_name: str,
         project_id: str,
         project_number: str,
-        area_name: str,
+        division: str,
 ) -> None:
     tfvars_path = f'terraform/variables/{env}.tfvars'
 
@@ -41,15 +41,15 @@ def update_tfvar_file(
         lines = list(filter(should_keep_line, file.readlines()))
         file.close()
 
-        lines.insert(0, f'repo_name = "{project_name.lower()}-data-ingestor"\n')
+        lines.insert(0, f'repo_name = "{resource_name.lower()}-data-ingestor"\n')
         lines.insert(0, f'landing_zone_bucket = "landing-zone-{project_id}"\n')
         lines.insert(0, f'compute_service_account = "databricks-compute@{project_id}.iam.gserviceaccount.com"\n')
         lines.insert(0,
-                     f'deploy_service_account = "{project_name.lower()}-deploy@{project_id}.iam.gserviceaccount.com"\n')
+                     f'deploy_service_account = "{resource_name.lower()}-deploy@{project_id}.iam.gserviceaccount.com"\n')
         lines.insert(0, f'project_number = "{project_number}"\n')
         lines.insert(0, f'project_id = "{project_id}"\n')
-        lines.insert(0, f'area_name = "{area_name}"\n')
-        lines.insert(0, f'team_name = "{project_name.lower()}"\n')
+        lines.insert(0, f'area_name = "{division}"\n')
+        lines.insert(0, f'team_name = "{resource_name.lower()}"\n')
 
         with open(tfvars_path, 'w') as file:
             file.writelines(lines)
@@ -62,11 +62,11 @@ def update_state_bucket(env: str, val_for_env: str) -> None:
         file.close()
 
 
-def update_databricks_bundle_yml(area_name: str, project_name: str):
+def update_databricks_bundle_yml(division: str, resource_name: str):
     config_path = 'databricks.yml'
 
     with open(config_path, 'r') as file:
-        lines = [line.replace("plattform_dataprodukter", f"{area_name.lower()}_{project_name.lower()}") for line in
+        lines = [line.replace("plattform_dataprodukter", f"{division}_{resource_name}") for line in
                  file.readlines()]
         file.close()
 
@@ -75,13 +75,13 @@ def update_databricks_bundle_yml(area_name: str, project_name: str):
             file.close()
 
 
-def update_codeowners(team_name: str, github_team_name: str):
+def update_codeowners(team_name: str, github_team: str):
     codeowners_path = 'CODEOWNERS'
 
     with open(codeowners_path, 'r') as file:
         file_content = file.read()
         file_content = file_content.replace("Team DASK (Dataplattform Statens Kartverk)", f"Team {team_name}")
-        file_content = file_content.replace("@kartverket/dask", f"@kartverket/{github_team_name}")
+        file_content = file_content.replace("@kartverket/dask", f"@kartverket/{github_team}")
         file_content = file_content.replace("@sondrfos", "<<enter security champion (@username) here>>")
         file.close()
 
@@ -90,14 +90,14 @@ def update_codeowners(team_name: str, github_team_name: str):
             file.close()
 
 
-def update_catalog_info(team_short_name: str):
+def update_catalog_info(resource_name: str):
     cataloginfo_path = 'catalog-info.yaml'
 
     with open(cataloginfo_path, 'r') as file:
         file_content = file.read()
-        file_content = file_content.replace("dask-monorepo-reference-setup", f'{team_short_name}-data-ingestor')
+        file_content = file_content.replace("dask-monorepo-reference-setup", f'{resource_name}-data-ingestor')
         file_content = file_content.replace("documentation", "ops")
-        file_content = file_content.replace("dataplattform", team_short_name)
+        file_content = file_content.replace("dataplattform", resource_name)
         file.close()
 
         with open(cataloginfo_path, 'w') as file_out:
@@ -105,7 +105,7 @@ def update_catalog_info(team_short_name: str):
             file_out.close()
 
 
-def configure_github_deploy_workflow(env: str, project_name: str, project_id: str, project_number: str):
+def configure_github_deploy_workflow(env: str, resource_name: str, project_id: str, project_number: str):
     workflows_path = '.github/workflows'
 
     deploy_sa_to_replace = {
@@ -125,10 +125,10 @@ def configure_github_deploy_workflow(env: str, project_name: str, project_id: st
 
     replacement_tuples = [
         (project_number_to_replace[env], project_number),
-        (deploy_sa_to_replace[env], f'{project_name.lower()}-deploy@{project_id}.iam.gserviceaccount.com'),
+        (deploy_sa_to_replace[env], f'{resource_name}-deploy@{project_id}.iam.gserviceaccount.com'),
         (compute_sa_to_replace[env], f'databricks-compute@{project_id}.iam.gserviceaccount.com'),
-        (repo_to_replace, f'{project_name.lower()}-data-ingestor'),
-        (project_name_to_replace, project_name.lower()),
+        (repo_to_replace, f'{resource_name}-data-ingestor'),
+        (project_name_to_replace, resource_name),
     ]
 
     with open(f'{workflows_path}/deploy-{env}.yml') as file:
@@ -144,40 +144,40 @@ def configure_github_deploy_workflow(env: str, project_name: str, project_id: st
 
 
 def edit_file(json_obj: dict):
-    team_short_name: str = json_obj.get("project_name").lower()
-    team_name: str = json_obj.get("name")
-    github_team_name: str = json_obj.get("git_team_name")
-    area_name: str = replace_special_characters(json_obj.get("area_name"))
+    resource_name: str = json_obj.get("resource_name").lower()
+    team_name: str = json_obj.get("team_name")
+    github_team: str = json_obj.get("github_team")
+    division: str = replace_special_characters(json_obj.get("division"))
 
-    update_codeowners(team_name, github_team_name)
-    update_databricks_bundle_yml(area_name, team_short_name)
-    update_catalog_info(team_short_name)
+    update_codeowners(team_name, github_team)
+    update_databricks_bundle_yml(division, resource_name)
+    update_catalog_info(resource_name)
 
     for env in envs:
         state_bucket_for_env = json_obj.get("gcp_state_buckets")[env]
         update_state_bucket(env, state_bucket_for_env)
 
         project_id_for_env = json_obj.get("gcp_project_ids")[env]
-        auth_project_number_for_env = json_obj.get("gcp_auth_numbers")[env]
-        update_tfvar_file(env, team_short_name, project_id_for_env, auth_project_number_for_env, area_name)
+        project_number_for_env = json_obj.get("gcp_project_numbers")[env]
+        update_tfvar_file(env, resource_name, project_id_for_env, project_number_for_env, division)
 
-        configure_github_deploy_workflow(env, team_short_name, project_id_for_env, auth_project_number_for_env)
+        configure_github_deploy_workflow(env, resource_name, project_id_for_env, project_number_for_env)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Sett opp data-ingestor-repo for et nytt produktteam')
     payload_format = """
     {
-        "name": string,
-        "project_name": string,
-        "area_name": string,
-        "git_team_name": string,
+        "team_name": string,
+        "resource_name": string,
+        "division": string,
+        "github_team": string,
         "gcp_project_ids": {
             "sandbox": string,
             "dev": string,
             "prod": string
         },
-        "gcp_auth_numbers": {
+        "gcp_project_numbers": {
             "sandbox": string,
             "dev": string,
             "prod": string
