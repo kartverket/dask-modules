@@ -28,6 +28,29 @@ def should_keep_line(line: str) -> bool:
     return False
 
 
+def replace_text_in_file(file_path: str, replacements: list[tuple[str, str]]) -> None:
+    with open(file_path, "r") as file:
+        content = file.read()
+        for replace, replacement in replacements:
+            content = content.replace(replace, replacement)
+
+    with open(file_path, "w") as file:
+        file.write(content)
+
+
+def update_repo_name(resource_name: str) -> None:
+    files = [
+        "terraform/variables.tf",
+        "databricks.yml"
+    ]
+
+    for change_file in files:
+        replace_text_in_file(
+            change_file,
+            [("dask-monorepo-reference-setup", f"{resource_name}-data-ingestor")],
+        )
+
+
 def update_tfvar_file(
         env: str,
         resource_name: str,
@@ -160,6 +183,7 @@ def edit_file(json_obj: dict):
         project_id_for_env = json_obj.get("gcp_project_ids")[env]
         project_number_for_env = json_obj.get("gcp_project_numbers")[env]
         update_tfvar_file(env, resource_name, project_id_for_env, project_number_for_env, division)
+        update_repo_name(resource_name)
 
         configure_github_deploy_workflow(env, resource_name, project_id_for_env, project_number_for_env)
 
