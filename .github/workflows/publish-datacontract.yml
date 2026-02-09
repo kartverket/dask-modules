@@ -1,0 +1,90 @@
+name: Publish datacontract
+on:
+    workflow_call:
+        inputs:
+            runner:
+                description: "The GitHub runner to use when running the deploy. This can for example be `ubuntu-latest`"
+                required: true
+                type: string
+            auth_project_number:
+                description: "The GCP Project Number used for authentication. A 12-digit number used as a unique identifier for the project. Used to find workload identity pool."
+                required: true
+                type: string
+            service_account:
+                description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
+                required: true
+                type: string
+            datacontracts_path:
+                description: "The path to the directory containing datacontract YAML files to publish. Example: src/contracts"
+                required: true
+                type: string
+            environment:
+                description: "The target environment for deployment, e.g., 'dev' or 'prod'."
+                required: false
+                type: string
+                default: "prod"
+
+jobs:
+    publish-datacontract:
+        runs-on: ${{ inputs.runner }}
+        steps:
+            # Checkout the repository to the GitHub Actions runner
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  ref: ${{ github.ref }}
+
+            - name: Create workload identity provider string
+              id: create_workload_identity_provider
+              run: |
+                  PRODUCT_NAME="${{ inputs.service_account }}"
+                  PRODUCT_NAME="${PRODUCT_NAME%%-deploy*}"
+                  WORKLOAD_IDENTITY_PROVIDER="projects/${{ inputs.auth_project_number }}/locations/global/workloadIdentityPools/${PRODUCT_NAME}-deploy-pool/providers/github-provider"
+                  echo "workload_identity_provider=$WORKLOAD_IDENTITY_PROVIDER" >> $GITHUB_OUTPUT
+
+            - id: google_auth
+              name: Authenticate with Google Cloud
+              uses: google-github-actions/auth@v2.1.10
+              with:
+                  workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
+                  service_account: ${{ inputs.service_account}}
+
+            - name: "Set up Cloud SDK"
+              uses: "google-github-actions/setup-gcloud@v3"
+              with:
+                  version: ">= 363.0.0"
+
+            - name: Install mikefarah/yq
+              run: |
+                  wget https://github.com/mikefarah/yq/releases/download/v4.43.1/yq_linux_amd64 -O /usr/local/bin/yq
+                  chmod +x /usr/local/bin/yq
+
+            - name: Get changed contract files
+              id: changed_contracts
+              run: |
+                  echo "Fetching changed contract files..."
+                  echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+                  echo "Fetching main branch for comparison"
+                  git fetch origin main
+                  echo "Comparing origin/main...HEAD"
+                  git diff --name-only origin/main...HEAD
+                  echo "Filtering for contracts in path: ${{ inputs.datacontracts_path }}"
+                  CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontracts_path }}/.*\.yml$' || echo '')
+                  echo "Changed contract files:"
+                  echo "$CHANGED_FILES"
+                  echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+
+            - name: Publish changed contracts as JSON to Pub/Sub
+              if: steps.changed_contracts.outputs.changed_files != ''
+              run: |
+                  for file in ${{ steps.changed_contracts.outputs.changed_files }}; do
+                    echo "Publishing $file"
+                    JSON_CONTENT=$(yq -o json "$file")
+                    if [[ "${{ inputs.environment }}" == "prod" ]]; then
+                        TOPIC="projects/dataplattform-prod-9b1d/topics/data-contract-topic"
+                    else
+                        TOPIC="projects/dataplattform-dev-d335/topics/data-contract-topic"
+                    fi
+                    gcloud pubsub topics publish "$TOPIC" --message "$JSON_CONTENT"
+                  done
