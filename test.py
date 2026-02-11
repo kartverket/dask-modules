@@ -7,7 +7,7 @@ if os.environ["ENVIRONMENT"] == "dev":
         "https://2004011444667850.0.gcp.databricks.com"
     )
     os.environ["DATACONTRACT_DATABRICKS_HTTP_PATH"] = (
-        "/sql/1.0/warehouses/822bdad63909bcd2"
+        "/sql/1.0/warehouses/43ebd38bb3fbe7ac"
     )
 elif os.environ["ENVIRONMENT"] == "prod":
     os.environ["DATACONTRACT_DATABRICKS_SERVER_HOSTNAME"] = (
