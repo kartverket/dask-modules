@@ -95,7 +95,7 @@ jobs:
             - name: Validate datacontracts
               if: steps.changed_contracts.outputs.changed_files != ''
               run: |
-                  python dask-modules/test.py
+                  ENVIRONMENT=${{ inputs.environment }} SERVICE_ACCOUNT=${{ inputs.service_account }} DATACONTRACT_PATH=${{ inputs.datacontracts_path }} python dask-modules/test.py
 
             - name: Publish changed contracts as JSON to Pub/Sub
               if: steps.changed_contracts.outputs.changed_files != ''
