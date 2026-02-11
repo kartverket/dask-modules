@@ -77,16 +77,17 @@ jobs:
 
             - name: Publish changed contracts as JSON to Pub/Sub
               if: steps.changed_contracts.outputs.changed_files != ''
+              continue-on-error: true
               run: |
-                  echo "::warning file=app.js,line=1,col=5,endColumn=7,title=YOUR-TITLE::Missing semicolon"
+                  exit 1
 
-                  #   for file in ${{ steps.changed_contracts.outputs.changed_files }}; do
-                  #     echo "Publishing $file"
-                  #     JSON_CONTENT=$(yq -o json "$file")
-                  #     if [[ "${{ inputs.environment }}" == "prod" ]]; then
-                  #         TOPIC="projects/dataplattform-prod-9b1d/topics/data-contract-topic"
-                  #     else
-                  #         TOPIC="projects/dataplattform-dev-d335/topics/data-contract-topic"
-                  #     fi
-                  #     gcloud pubsub topics publish "$TOPIC" --message "$JSON_CONTENT"
-                  #   done
+                    # for file in ${{ steps.changed_contracts.outputs.changed_files }}; do
+                    #   echo "Publishing $file"
+                    #   JSON_CONTENT=$(yq -o json "$file")
+                    #   if [[ "${{ inputs.environment }}" == "prod" ]]; then
+                    #       TOPIC="projects/dataplattform-prod-9b1d/topics/data-contract-topic"
+                    #   else
+                    #       TOPIC="projects/dataplattform-dev-d335/topics/data-contract-topic"
+                    #   fi
+                    #   gcloud pubsub topics publish "$TOPIC" --message "$JSON_CONTENT"
+                    # done
