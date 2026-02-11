@@ -10,7 +10,11 @@ on:
                 description: "The GCP Project Number used for authentication. A 12-digit number used as a unique identifier for the project. Used to find workload identity pool."
                 required: true
                 type: string
-            service_account:
+            service_account_deploy:
+                description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
+                required: true
+                type: string
+            service_account_compute:
                 description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
                 required: true
                 type: string
@@ -43,17 +47,10 @@ jobs:
             - name: Create workload identity provider string
               id: create_workload_identity_provider
               run: |
-                  PRODUCT_NAME="${{ inputs.service_account }}"
+                  PRODUCT_NAME="${{ inputs.service_account_deploy }}"
                   PRODUCT_NAME="${PRODUCT_NAME%%-deploy*}"
                   WORKLOAD_IDENTITY_PROVIDER="projects/${{ inputs.auth_project_number }}/locations/global/workloadIdentityPools/${PRODUCT_NAME}-deploy-pool/providers/github-provider"
                   echo "workload_identity_provider=$WORKLOAD_IDENTITY_PROVIDER" >> $GITHUB_OUTPUT
-
-            - id: google_auth
-              name: Authenticate with Google Cloud
-              uses: google-github-actions/auth@v2.1.10
-              with:
-                  workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
-                  service_account: ${{ inputs.service_account}}
 
             - name: "Set up Cloud SDK"
               uses: "google-github-actions/setup-gcloud@v3"
@@ -92,10 +89,24 @@ jobs:
               run: |
                   pip install -r dask-modules/requirements.txt
 
+            - id: google_auth_compute
+              name: Authenticate with Google Cloud
+              uses: google-github-actions/auth@v2.1.10
+              with:
+                  workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
+                  service_account: ${{ inputs.service_account_compute}}
+
             - name: Validate datacontracts
               if: steps.changed_contracts.outputs.changed_files != ''
               run: |
-                  ENVIRONMENT=${{ inputs.environment }} SERVICE_ACCOUNT=${{ inputs.service_account }} DATACONTRACT_PATH=${{ inputs.datacontracts_path }} python dask-modules/test.py
+                  ENVIRONMENT=${{ inputs.environment }} SERVICE_ACCOUNT=${{ inputs.service_account_compute }} DATACONTRACT_PATH=${{ inputs.datacontracts_path }} python dask-modules/test.py
+
+            - id: google_auth_deploy
+              name: Authenticate with Google Cloud
+              uses: google-github-actions/auth@v2.1.10
+              with:
+                  workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
+                  service_account: ${{ inputs.service_account_deploy}}
 
             - name: Publish changed contracts as JSON to Pub/Sub
               if: steps.changed_contracts.outputs.changed_files != ''
