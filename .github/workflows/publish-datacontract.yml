@@ -30,10 +30,15 @@ jobs:
         steps:
             # Checkout the repository to the GitHub Actions runner
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
               with:
                   fetch-depth: 0
                   ref: ${{ github.ref }}
+
+            - name: Setup Python
+              uses: actions/setup-python@v6
+              with:
+                  python-version: "3.12"
 
             - name: Create workload identity provider string
               id: create_workload_identity_provider
@@ -75,19 +80,33 @@ jobs:
                   echo "$CHANGED_FILES"
                   echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
 
+            - name: Checkout
+              uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+                  repository: kartverket/dask-modules
+                  path: dask-modules
+
+            - name: Install dependencies
+              run: |
+                  pip install -r dask-modules/requirements.txt
+
+            - name: Validate datacontracts
+              if: steps.changed_contracts.outputs.changed_files != ''
+              run: |
+                  python dask-modules/test.py
+
             - name: Publish changed contracts as JSON to Pub/Sub
               if: steps.changed_contracts.outputs.changed_files != ''
-              continue-on-error: true
               run: |
-                  exit 1
 
-                    # for file in ${{ steps.changed_contracts.outputs.changed_files }}; do
-                    #   echo "Publishing $file"
-                    #   JSON_CONTENT=$(yq -o json "$file")
-                    #   if [[ "${{ inputs.environment }}" == "prod" ]]; then
-                    #       TOPIC="projects/dataplattform-prod-9b1d/topics/data-contract-topic"
-                    #   else
-                    #       TOPIC="projects/dataplattform-dev-d335/topics/data-contract-topic"
-                    #   fi
-                    #   gcloud pubsub topics publish "$TOPIC" --message "$JSON_CONTENT"
-                    # done
+                  for file in ${{ steps.changed_contracts.outputs.changed_files }}; do
+                    echo "Publishing $file"
+                    JSON_CONTENT=$(yq -o json "$file")
+                    if [[ "${{ inputs.environment }}" == "prod" ]]; then
+                        TOPIC="projects/dataplattform-prod-9b1d/topics/data-contract-topic"
+                    else
+                        TOPIC="projects/dataplattform-dev-d335/topics/data-contract-topic"
+                    fi
+                    gcloud pubsub topics publish "$TOPIC" --message "$JSON_CONTENT"
+                  done
