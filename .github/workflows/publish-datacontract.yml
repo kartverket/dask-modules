@@ -86,6 +86,7 @@ jobs:
                   fetch-depth: 0
                   repository: kartverket/dask-modules
                   path: dask-modules
+                  ref: td-1930-add-cicd-publish-datacontract
 
             - name: Install dependencies
               run: |
