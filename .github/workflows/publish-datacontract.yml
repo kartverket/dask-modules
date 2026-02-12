@@ -75,6 +75,7 @@ jobs:
                   CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontracts_path }}/.*\.yml$' || echo '')"
                   echo "Changed contract files:"
                   echo "$CHANGED_FILES"
+                  echo "124"
                   echo "changed_files='$CHANGED_FILES'" >> $GITHUB_OUTPUT
 
             - name: Checkout
