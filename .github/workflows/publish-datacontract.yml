@@ -73,9 +73,10 @@ jobs:
                   git diff --name-only origin/main...HEAD
                   echo "Filtering for contracts in path: ${{ inputs.datacontracts_path }}"
                   CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontracts_path }}/.*\.yml$' || echo '')"
+                  CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',')"
                   echo "Changed contract files:"
-                  echo "\"$CHANGED_FILES\""
-                  echo "changed_files=\"$CHANGED_FILES\"" >> $GITHUB_OUTPUT
+                  echo "\"$CHANGED_FILES_COMMA_SEPARATED\""
+                  echo "changed_files=\"$CHANGED_FILES_COMMA_SEPARATED\"" >> $GITHUB_OUTPUT
 
             - name: Checkout
               uses: actions/checkout@v6

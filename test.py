@@ -34,7 +34,7 @@ changed_datacontracts = os.environ["CHANGED_DATACONTRACTS"]
 print(f"Changed data contracts: {changed_datacontracts}")
 
 changed_datacontracts_list = (
-    changed_datacontracts.splitlines() if changed_datacontracts else []
+    changed_datacontracts.split(",") if changed_datacontracts else []
 )
 changed_datacontracts_list_cleaned = [
     Path(file.strip()) for file in changed_datacontracts_list if file.strip()
