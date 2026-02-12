@@ -37,13 +37,13 @@ changed_datacontracts_list = (
     changed_datacontracts.split(",") if changed_datacontracts else []
 )
 changed_datacontracts_list_cleaned = [
-    Path(file.strip()) for file in changed_datacontracts_list if file.strip()
+    file.strip() for file in changed_datacontracts_list if file.strip()
 ]
 
 
 has_failed = False
 for file in changed_datacontracts_list_cleaned:
-    if file.suffix in [".yml", ".yaml"]:
+    if file.endswith(".yml") or file.endswith(".yaml"):
         data_contract = DataContract(data_contract_file=file)
         run = data_contract.test()
         if not run.has_passed():
