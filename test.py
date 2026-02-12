@@ -33,16 +33,23 @@ os.environ["DATACONTRACT_DATABRICKS_TOKEN"] = str(
 changed_datacontracts = os.environ["CHANGED_DATACONTRACTS"]
 print(f"Changed data contracts: {changed_datacontracts}")
 
+changed_datacontracts_list = (
+    changed_datacontracts.splitlines() if changed_datacontracts else []
+)
+changed_datacontracts_list_cleaned = [
+    Path(file.strip()) for file in changed_datacontracts_list if file.strip()
+]
 
-# has_failed = False
-# for file in datacontract_path.iterdir():
-#     if file.suffix in [".yml", ".yaml"]:
-#         data_contract = DataContract(data_contract_file=file)
-#         run = data_contract.test()
-#         if not run.has_passed():
-#             has_failed = True
-#             print(f"Data contract {file} failed tests:")
-#             print(run.pretty_logs())
 
-# if has_failed:
-#     raise Exception("Some data contracts failed tests. See logs for details.")
+has_failed = False
+for file in changed_datacontracts_list_cleaned:
+    if file.suffix in [".yml", ".yaml"]:
+        data_contract = DataContract(data_contract_file=file)
+        run = data_contract.test()
+        if not run.has_passed():
+            has_failed = True
+            print(f"Data contract {file} failed tests:")
+            print(run.pretty_logs())
+
+if has_failed:
+    raise Exception("Some data contracts failed tests. See logs for details.")
