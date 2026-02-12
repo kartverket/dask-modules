@@ -52,15 +52,6 @@ jobs:
                   path: dask-modules
                   ref: td-1930-add-cicd-publish-datacontract
 
-            - name: Setup Python
-              uses: actions/setup-python@v6
-              with:
-                  python-version: "3.12"
-
-            - name: Install dependencies
-              run: |
-                  pip install -r dask-modules/requirements.txt
-
             - name: Create workload identity provider string
               id: create_workload_identity_provider
               run: |
@@ -76,10 +67,19 @@ jobs:
                   workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
                   service_account: ${{ inputs.service_account_compute}}
 
+            - name: Setup Python
+              uses: actions/setup-python@v6
+              with:
+                  python-version: "3.12"
+
+            - name: Install dependencies
+              run: |
+                  pip install -r dask-modules/scripts/validate_datacontract/requirements.txt
+
             - name: Validate datacontracts
               if: steps.changed_contracts.outputs.changed_files != ''
               run: |
-                  ENVIRONMENT=${{ inputs.environment }} SERVICE_ACCOUNT=${{ inputs.service_account_compute }} CHANGED_DATACONTRACTS="${{ steps.changed_contracts.outputs.changed_files }}" python dask-modules/test.py
+                  ENVIRONMENT=${{ inputs.environment }} SERVICE_ACCOUNT=${{ inputs.service_account_compute }} CHANGED_DATACONTRACTS="${{ steps.changed_contracts.outputs.changed_files }}" python dask-modules/scripts/validate_datacontract/validate_datacontract.py
 
             - id: google_auth_deploy
               name: Authenticate with Google Cloud
