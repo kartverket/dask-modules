@@ -72,7 +72,7 @@ jobs:
                   echo "Comparing origin/main...HEAD"
                   git diff --name-only origin/main...HEAD
                   echo "Filtering for contracts in path: ${{ inputs.datacontracts_path }}"
-                  CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontracts_path }}/.*\.yml$' || echo '')
+                  CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontracts_path }}/.*\.yml$' || echo '')"
                   echo "Changed contract files:"
                   echo "$CHANGED_FILES"
                   echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
