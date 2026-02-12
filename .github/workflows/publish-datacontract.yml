@@ -2,23 +2,19 @@ name: Publish datacontract
 on:
     workflow_call:
         inputs:
-            runner:
-                description: "The GitHub runner to use when running the deploy. This can for example be `ubuntu-latest`"
-                required: true
-                type: string
             auth_project_number:
                 description: "The GCP Project Number used for authentication. A 12-digit number used as a unique identifier for the project. Used to find workload identity pool."
                 required: true
                 type: string
             service_account_deploy:
-                description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
+                description: "The GCP service account connected to the identity pool that will be used to deploy the datacontract."
                 required: true
                 type: string
             service_account_compute:
-                description: "The GCP service account connected to the identity pool that will be used by Terraform for authentication to GCP."
+                description: "The GCP service account connected to the identity pool that will be used to validate the datacontract against databricks."
                 required: true
                 type: string
-            datacontracts_path:
+            datacontract_path:
                 description: "The path to the directory containing datacontract YAML files to publish. Example: src/contracts"
                 required: true
                 type: string
@@ -30,49 +26,19 @@ on:
 
 jobs:
     publish-datacontract:
-        runs-on: ${{ inputs.runner }}
+        runs-on: ubuntu-latest
         steps:
-            # Checkout the repository to the GitHub Actions runner
             - name: Checkout
               uses: actions/checkout@v6
               with:
                   fetch-depth: 0
                   ref: ${{ github.ref }}
 
-            - name: Setup Python
-              uses: actions/setup-python@v6
-              with:
-                  python-version: "3.12"
-
-            - name: Create workload identity provider string
-              id: create_workload_identity_provider
-              run: |
-                  PRODUCT_NAME="${{ inputs.service_account_deploy }}"
-                  PRODUCT_NAME="${PRODUCT_NAME%%-deploy*}"
-                  WORKLOAD_IDENTITY_PROVIDER="projects/${{ inputs.auth_project_number }}/locations/global/workloadIdentityPools/${PRODUCT_NAME}-deploy-pool/providers/github-provider"
-                  echo "workload_identity_provider=$WORKLOAD_IDENTITY_PROVIDER" >> $GITHUB_OUTPUT
-
-            - name: "Set up Cloud SDK"
-              uses: "google-github-actions/setup-gcloud@v3"
-              with:
-                  version: ">= 363.0.0"
-
-            - name: Install mikefarah/yq
-              run: |
-                  wget https://github.com/mikefarah/yq/releases/download/v4.43.1/yq_linux_amd64 -O /usr/local/bin/yq
-                  chmod +x /usr/local/bin/yq
-
             - name: Get changed contract files
               id: changed_contracts
               run: |
-                  echo "Fetching changed contract files..."
-                  echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
-                  echo "Fetching main branch for comparison"
                   git fetch origin main
-                  echo "Comparing origin/main...HEAD"
-                  git diff --name-only origin/main...HEAD
-                  echo "Filtering for contracts in path: ${{ inputs.datacontracts_path }}"
-                  CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontracts_path }}/.*\.yml$' || echo '')"
+                  CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontract_path }}/.*\.yml$' || echo '')"
                   CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',')"
                   echo "Changed contract files:"
                   echo "\"$CHANGED_FILES_COMMA_SEPARATED\""
@@ -86,9 +52,22 @@ jobs:
                   path: dask-modules
                   ref: td-1930-add-cicd-publish-datacontract
 
+            - name: Setup Python
+              uses: actions/setup-python@v6
+              with:
+                  python-version: "3.12"
+
             - name: Install dependencies
               run: |
                   pip install -r dask-modules/requirements.txt
+
+            - name: Create workload identity provider string
+              id: create_workload_identity_provider
+              run: |
+                  PRODUCT_NAME="${{ inputs.service_account_deploy }}"
+                  PRODUCT_NAME="${PRODUCT_NAME%%-deploy*}"
+                  WORKLOAD_IDENTITY_PROVIDER="projects/${{ inputs.auth_project_number }}/locations/global/workloadIdentityPools/${PRODUCT_NAME}-deploy-pool/providers/github-provider"
+                  echo "workload_identity_provider=$WORKLOAD_IDENTITY_PROVIDER" >> $GITHUB_OUTPUT
 
             - id: google_auth_compute
               name: Authenticate with Google Cloud
@@ -108,6 +87,16 @@ jobs:
               with:
                   workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
                   service_account: ${{ inputs.service_account_deploy}}
+
+            - name: "Set up Cloud SDK"
+              uses: "google-github-actions/setup-gcloud@v3"
+              with:
+                  version: ">= 363.0.0"
+
+            - name: Install mikefarah/yq
+              run: |
+                  wget https://github.com/mikefarah/yq/releases/download/v4.43.1/yq_linux_amd64 -O /usr/local/bin/yq
+                  chmod +x /usr/local/bin/yq
 
             - name: Publish changed contracts as JSON to Pub/Sub
               if: steps.changed_contracts.outputs.changed_files != ''

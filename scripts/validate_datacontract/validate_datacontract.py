@@ -31,20 +31,16 @@ os.environ["DATACONTRACT_DATABRICKS_TOKEN"] = str(
 )
 
 changed_datacontracts = os.environ["CHANGED_DATACONTRACTS"]
-print(f"Changed data contracts: {changed_datacontracts}")
-
-changed_datacontracts_list = (
-    changed_datacontracts.split(",") if changed_datacontracts else []
-)
 changed_datacontracts_list_cleaned = [
-    file.strip() for file in changed_datacontracts_list if file.strip()
+    Path(file.strip())
+    for file in (changed_datacontracts.split(",") if changed_datacontracts else [])
+    if file.strip()
 ]
-
 
 has_failed = False
 for file in changed_datacontracts_list_cleaned:
-    if file.endswith(".yml") or file.endswith(".yaml"):
-        data_contract = DataContract(data_contract_file=file)
+    if file.suffix in [".yml", ".yaml"]:
+        data_contract = DataContract(data_contract_file=str(file))
         run = data_contract.test()
         if not run.has_passed():
             has_failed = True
