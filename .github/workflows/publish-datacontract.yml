@@ -83,7 +83,7 @@ jobs:
                   pip install -r dask-modules/scripts/validate_datacontract/requirements.txt
 
             - name: Validate datacontracts
-              if: steps.changed_contracts.outputs.changed_files != '' && (github.event_name == 'pull_request' || github.event_name == 'push')
+              if: steps.changed_contracts.outputs.changed_files != ''
               run: |
                   ENVIRONMENT=${{ inputs.environment }} SERVICE_ACCOUNT=${{ inputs.service_account_compute }} CHANGED_DATACONTRACTS="${{ steps.changed_contracts.outputs.changed_files }}" python dask-modules/scripts/validate_datacontract/validate_datacontract.py
 
