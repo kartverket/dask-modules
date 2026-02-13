@@ -54,12 +54,12 @@ jobs:
                     CURRENT_RELEASE=$(git tag --sort version:refname | tail -n 1 )
                       if [[ "$PREVIOUS_RELEASE" == "$CURRENT_RELEASE" ]]; then
                         echo "No previous release found, comparing with all files in the repository"
-                        CHANGED_FILES="$(git ls-files | grep '^${{ inputs.datacontract_path }}/.*\.(yml|yaml)$' || echo '')"
+                        CHANGED_FILES="$(git ls-files | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                         echo "Changed contract files:"
                         echo "\"$CHANGED_FILES\""
                       else
                         echo "Finding changed contract files between $PREVIOUS_RELEASE and $CURRENT_RELEASE"
-                        CHANGED_FILES="$(git diff --name-only $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${{ inputs.datacontract_path }}/.*\.(yml|yaml)$' || echo '')"
+                        CHANGED_FILES="$(git diff --name-only $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                         echo "Changed contract files:"
                         echo "\"$CHANGED_FILES\""
                       fi
