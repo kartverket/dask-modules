@@ -20,14 +20,17 @@ on:
                 type: string
             environment:
                 description: "The target environment for deployment, e.g., 'dev' or 'prod'."
-                required: false
+                required: true
                 type: string
-                default: "prod"
             publish_datacontract:
                 description: "Whether to publish the datacontract to Pub/Sub. Set to false to only validate the datacontract without publishing."
-                required: false
+                required: true
                 type: boolean
                 default: false
+            last_published_ref:
+                description: "The git ref (branch, tag or commit id) used to find the last published datacontract. Used to find changed datacontract files. Example: main"
+                required: false
+                type: string
 
 jobs:
     publish-datacontract:
@@ -43,7 +46,17 @@ jobs:
               id: changed_contracts
               run: |
                   git fetch origin main
-                  CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontract_path }}/.*\.yml$' || echo '')"
+
+                  if [[ "${{ inputs.last_published_ref }}" ]]; then
+                    CHANGED_FILES="$(git diff --name-only ${{ inputs.last_published_ref }}...${{ github.ref }} | grep '^${{ inputs.datacontract_path }}/.*\.yml$' || echo '')"
+                  elif [[ "${{ github.event_name }}" == 'release' ]]; then
+                    PREVIOUS_RELEASE=$(git tag --sort version:refname | tail -n 2 | head -n 1)
+                    CURRENT_RELEASE=$(git tag --sort version:refname | tail -n 1 )
+                    CHANGED_FILES="$(git diff --name-only $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${{ inputs.datacontract_path }}/.*\.yml$' || echo '')"
+                  else
+                    CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontract_path }}/.*\.yml$' || echo '')"
+                  fi
+
                   CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',')"
                   echo "Changed contract files:"
                   echo "\"$CHANGED_FILES_COMMA_SEPARATED\""
