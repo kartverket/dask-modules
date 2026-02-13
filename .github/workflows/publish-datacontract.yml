@@ -52,6 +52,7 @@ jobs:
                   elif [[ "${{ github.event_name }}" == 'release' ]]; then
                     PREVIOUS_RELEASE=$(git tag --sort version:refname | tail -n 2 | head -n 1)
                     CURRENT_RELEASE=$(git tag --sort version:refname | tail -n 1 )
+                    echo "Comparing current release $CURRENT_RELEASE with previous release $PREVIOUS_RELEASE"
                     if [[ -z "$PREVIOUS_RELEASE" ]]; then
                         CHANGED_FILES="$(git ls-files | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                     else
@@ -131,6 +132,11 @@ jobs:
                   for file in "${FILES[@]}"; do
                     echo "Publishing $file"
                     JSON_CONTENT=$(yq -o json "$file")
+                    if [[ -z "$JSON_CONTENT" ]]; then
+                      echo "Skipping $file: no JSON content"
+                      continue
+                    fi
+                    echo "Publishing $file"
                     if [[ "${{ inputs.environment }}" == "prod" ]]; then
                         TOPIC="projects/dataplattform-prod-9b1d/topics/data-contract-topic"
                     else
