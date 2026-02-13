@@ -48,13 +48,17 @@ jobs:
                   git fetch origin main
 
                   if [[ "${{ inputs.last_published_ref }}" ]]; then
-                    CHANGED_FILES="$(git diff --name-only ${{ inputs.last_published_ref }}...${{ github.ref }} | grep '^${{ inputs.datacontract_path }}/.*\.yml$' || echo '')"
+                    CHANGED_FILES="$(git diff --name-only ${{ inputs.last_published_ref }}...${{ github.ref }} | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                   elif [[ "${{ github.event_name }}" == 'release' ]]; then
                     PREVIOUS_RELEASE=$(git tag --sort version:refname | tail -n 2 | head -n 1)
                     CURRENT_RELEASE=$(git tag --sort version:refname | tail -n 1 )
-                    CHANGED_FILES="$(git diff --name-only $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${{ inputs.datacontract_path }}/.*\.yml$' || echo '')"
+                    if [[ -z "$PREVIOUS_RELEASE" ]]; then
+                        CHANGED_FILES="$(git ls-files | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
+                    else
+                        CHANGED_FILES="$(git diff --name-only $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
+                    fi
                   else
-                    CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontract_path }}/.*\.yml$' || echo '')"
+                    CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                   fi
 
                   CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',')"
