@@ -23,6 +23,11 @@ on:
                 required: false
                 type: string
                 default: "prod"
+            publish_datacontract:
+                description: "Whether to publish the datacontract to Pub/Sub. Set to false to only validate the datacontract without publishing."
+                required: false
+                type: boolean
+                default: true
 
 jobs:
     publish-datacontract:
@@ -78,18 +83,20 @@ jobs:
                   pip install -r dask-modules/scripts/validate_datacontract/requirements.txt
 
             - name: Validate datacontracts
-              if: steps.changed_contracts.outputs.changed_files != ''
+              if: steps.changed_contracts.outputs.changed_files != '' && (github.event_name == 'pull_request' || github.event_name == 'push')
               run: |
                   ENVIRONMENT=${{ inputs.environment }} SERVICE_ACCOUNT=${{ inputs.service_account_compute }} CHANGED_DATACONTRACTS="${{ steps.changed_contracts.outputs.changed_files }}" python dask-modules/scripts/validate_datacontract/validate_datacontract.py
 
             - id: google_auth_deploy
               name: Authenticate with Google Cloud
+              if: inputs.publish_datacontract == 'true'
               uses: google-github-actions/auth@v2.1.10
               with:
                   workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
                   service_account: ${{ inputs.service_account_deploy}}
 
             - name: "Set up Cloud SDK"
+              if: inputs.publish_datacontract == 'true'
               uses: "google-github-actions/setup-gcloud@v3"
               with:
                   version: ">= 363.0.0"
@@ -100,7 +107,7 @@ jobs:
                   chmod +x /usr/local/bin/yq
 
             - name: Publish changed contracts as JSON to Pub/Sub
-              if: steps.changed_contracts.outputs.changed_files != ''
+              if: steps.changed_contracts.outputs.changed_files != '' && inputs.publish_datacontract == 'true'
               run: |
                   IFS=',' read -ra FILES <<< "${{ steps.changed_contracts.outputs.changed_files }}"
                   for file in "${FILES[@]}"; do
