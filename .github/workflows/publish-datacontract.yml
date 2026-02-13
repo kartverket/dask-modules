@@ -52,11 +52,16 @@ jobs:
                   elif [[ "${{ github.event_name }}" == 'release' ]]; then
                     PREVIOUS_RELEASE=$(git tag --sort version:refname | tail -n 2 | head -n 1)
                     CURRENT_RELEASE=$(git tag --sort version:refname | tail -n 1 )
-                    echo "Comparing current release $CURRENT_RELEASE with previous release $PREVIOUS_RELEASE"
                       if [[ "$PREVIOUS_RELEASE" == "$CURRENT_RELEASE" ]]; then
-                          CHANGED_FILES="$(git ls-files | grep '^${{ inputs.datacontract_path }}/.*\.(yml|yaml)$' || echo '')"
+                        echo "No previous release found, comparing with all files in the repository"
+                        CHANGED_FILES="$(git ls-files | grep '^${{ inputs.datacontract_path }}/.*\.(yml|yaml)$' || echo '')"
+                        echo "Changed contract files:"
+                        echo "\"$CHANGED_FILES\""
                       else
-                          CHANGED_FILES="$(git diff --name-only $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${{ inputs.datacontract_path }}/.*\.(yml|yaml)$' || echo '')"
+                        echo "Finding changed contract files between $PREVIOUS_RELEASE and $CURRENT_RELEASE"
+                        CHANGED_FILES="$(git diff --name-only $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${{ inputs.datacontract_path }}/.*\.(yml|yaml)$' || echo '')"
+                        echo "Changed contract files:"
+                        echo "\"$CHANGED_FILES\""
                       fi
                   else
                     CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
