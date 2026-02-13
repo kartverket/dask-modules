@@ -20,9 +20,17 @@ on:
                 type: string
             environment:
                 description: "The target environment for deployment, e.g., 'dev' or 'prod'."
+                required: true
+                type: string
+            publish_datacontract:
+                description: "Whether to publish the datacontract to Pub/Sub. Set to false to only validate the datacontract without publishing."
+                required: true
+                type: boolean
+                default: false
+            last_published_ref:
+                description: "The git ref (branch, tag or commit id) used to find the last published datacontract. Used to find changed datacontract files. Example: main"
                 required: false
                 type: string
-                default: "prod"
 
 jobs:
     publish-datacontract:
@@ -38,7 +46,21 @@ jobs:
               id: changed_contracts
               run: |
                   git fetch origin main
-                  CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontract_path }}/.*\.yml$' || echo '')"
+
+                  if [[ "${{ inputs.last_published_ref }}" ]]; then
+                    CHANGED_FILES="$(git diff --name-only ${{ inputs.last_published_ref }}...${{ github.ref }} | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
+                  elif [[ "${{ github.event_name }}" == 'release' ]]; then
+                    PREVIOUS_RELEASE=$(git tag --sort version:refname | tail -n 2 | head -n 1)
+                    CURRENT_RELEASE=$(git tag --sort version:refname | tail -n 1 )
+                      if [[ "$PREVIOUS_RELEASE" == "$CURRENT_RELEASE" ]]; then
+                        CHANGED_FILES="$(git ls-files | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
+                      else
+                        CHANGED_FILES="$(git diff --name-only $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
+                      fi
+                  else
+                    CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
+                  fi
+
                   CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',')"
                   echo "Changed contract files:"
                   echo "\"$CHANGED_FILES_COMMA_SEPARATED\""
@@ -62,7 +84,7 @@ jobs:
 
             - id: google_auth_compute
               name: Authenticate with Google Cloud
-              uses: google-github-actions/auth@v2.1.10
+              uses: google-github-actions/auth@v3
               with:
                   workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
                   service_account: ${{ inputs.service_account_compute}}
@@ -84,28 +106,38 @@ jobs:
 
             - id: google_auth_deploy
               name: Authenticate with Google Cloud
-              uses: google-github-actions/auth@v2.1.10
+              if: inputs.publish_datacontract
+              uses: google-github-actions/auth@v3
               with:
                   workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
                   service_account: ${{ inputs.service_account_deploy}}
 
             - name: "Set up Cloud SDK"
+              if: inputs.publish_datacontract
               uses: "google-github-actions/setup-gcloud@v3"
               with:
                   version: ">= 363.0.0"
 
             - name: Install mikefarah/yq
+              if: inputs.publish_datacontract
               run: |
                   wget https://github.com/mikefarah/yq/releases/download/v4.43.1/yq_linux_amd64 -O /usr/local/bin/yq
                   chmod +x /usr/local/bin/yq
 
             - name: Publish changed contracts as JSON to Pub/Sub
-              if: steps.changed_contracts.outputs.changed_files != ''
+              if: steps.changed_contracts.outputs.changed_files != '' && inputs.publish_datacontract
               run: |
                   IFS=',' read -ra FILES <<< "${{ steps.changed_contracts.outputs.changed_files }}"
                   for file in "${FILES[@]}"; do
-                    echo "Publishing $file"
+                    if [[ -z "$file" ]]; then
+                        continue
+                    fi
                     JSON_CONTENT=$(yq -o json "$file")
+                    if [[ -z "$JSON_CONTENT" ]]; then
+                        echo "Skipping $file: no JSON content"
+                        continue
+                    fi
+                    echo "Publishing $file"
                     if [[ "${{ inputs.environment }}" == "prod" ]]; then
                         TOPIC="projects/dataplattform-prod-9b1d/topics/data-contract-topic"
                     else
