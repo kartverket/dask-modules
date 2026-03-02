@@ -30,15 +30,15 @@ os.environ["DATACONTRACT_DATABRICKS_TOKEN"] = str(
     ws_client.api_client._cfg.oauth_token()
 )
 
-changed_datacontracts = os.environ["CHANGED_DATACONTRACTS"]
-changed_datacontracts_list_cleaned = [
+changed_data_contracts = os.environ["CHANGED_DATA_CONTRACTS"]
+changed_data_contracts_list_cleaned = [
     Path(file.strip())
-    for file in (changed_datacontracts.split(",") if changed_datacontracts else [])
+    for file in (changed_data_contracts.split(",") if changed_data_contracts else [])
     if file.strip()
 ]
 
 has_failed = False
-for file in changed_datacontracts_list_cleaned:
+for file in changed_data_contracts_list_cleaned:
     if file.suffix in [".yml", ".yaml"]:
         data_contract = DataContract(data_contract_file=str(file))
         run = data_contract.test()
