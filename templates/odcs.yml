@@ -1,0 +1,40 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: <Generer en unik id for datakontrakten, f.eks. en UUID>
+dataProduct: <Fyll inn catalog.schema.table>
+version: 0.0.1
+status: active
+
+servers:
+  - id: databricks-server
+    server: databricks-server
+    type: databricks
+    catalog: <fyll inn catalog>
+    schema: <fyll inn schema>
+
+team:
+  id: <team_id>
+  name: <Visningnavn for teamet>
+  members:
+    - username: <e-post til dataeier>
+      role: dataeier
+    - username: <e-post til dataansvarlig>
+      role: dataansvarlig
+
+description:
+  purpose: <Beskriv formålet med denne datakontrakten>
+  usage: <Beskriv hvordan dataene skal brukes>
+  limitations: <Beskriv eventuelle begrensninger>
+
+schema:
+  - name: <fyll inn tabellnavn>
+    description: <Beskriv tabellen>
+    properties:
+      - name: <fyll inn feltnavn>
+        logicalType: <fyll inn logisk type>
+        description: <Beskriv feltet>
+      - name: <fyll inn feltnavn>
+        logicalType: <fyll inn logisk type>
+        description: <Beskriv feltet>
+#
+# Se https://bitol-io.github.io/open-data-contract-standard/latest/ for mer informasjon
