@@ -1,0 +1,147 @@
+name: Publish data contract
+on:
+    workflow_call:
+        inputs:
+            auth_project_number:
+                description: "The GCP Project Number used for authentication. A 12-digit number used as a unique identifier for the project. Used to find workload identity pool."
+                required: true
+                type: string
+            service_account_deploy:
+                description: "The GCP service account connected to the identity pool that will be used to deploy the data contract."
+                required: true
+                type: string
+            service_account_compute:
+                description: "The GCP service account connected to the identity pool that will be used to validate the data contract against databricks."
+                required: true
+                type: string
+            data_contract_path:
+                description: "The path to the directory containing data contract YAML files to publish. Example: src/contracts"
+                required: true
+                type: string
+            environment:
+                description: "The target environment for deployment, e.g., 'dev' or 'prod'."
+                required: true
+                type: string
+            publish_data_contract:
+                description: "Whether to publish the data contract to Pub/Sub. Set to false to only validate the data contract without publishing."
+                required: true
+                type: boolean
+                default: false
+            last_published_ref:
+                description: "The git ref (branch, tag or commit id) used to find the last published data contract. Used to find changed data contract files. Example: main"
+                required: false
+                type: string
+
+jobs:
+    publish-data_contract:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+                  ref: ${{ github.ref }}
+
+            - name: Get changed contract files
+              id: changed_contracts
+              run: |
+                  git fetch origin main
+
+                  if [[ "${{ inputs.last_published_ref }}" ]]; then
+                    CHANGED_FILES="$(git diff --name-only ${{ inputs.last_published_ref }}...${{ github.ref }} | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
+                  elif [[ "${{ github.event_name }}" == 'release' ]]; then
+                    PREVIOUS_RELEASE=$(git tag --sort version:refname | tail -n 2 | head -n 1)
+                    CURRENT_RELEASE=$(git tag --sort version:refname | tail -n 1 )
+                      if [[ "$PREVIOUS_RELEASE" == "$CURRENT_RELEASE" ]]; then
+                        CHANGED_FILES="$(git ls-files | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
+                      else
+                        CHANGED_FILES="$(git diff --name-only $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
+                      fi
+                  else
+                    CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
+                  fi
+
+                  CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',')"
+                  echo "Changed contract files:"
+                  echo "\"$CHANGED_FILES_COMMA_SEPARATED\""
+                  echo "changed_files=\"$CHANGED_FILES_COMMA_SEPARATED\"" >> $GITHUB_OUTPUT
+
+            - name: Checkout
+              uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+                  repository: kartverket/dask-modules
+                  path: dask-modules
+                  ref: ${{ github.ref_name }}
+
+            - name: Create workload identity provider string
+              id: create_workload_identity_provider
+              run: |
+                  PRODUCT_NAME="${{ inputs.service_account_deploy }}"
+                  PRODUCT_NAME="${PRODUCT_NAME%%-deploy*}"
+                  WORKLOAD_IDENTITY_PROVIDER="projects/${{ inputs.auth_project_number }}/locations/global/workloadIdentityPools/${PRODUCT_NAME}-deploy-pool/providers/github-provider"
+                  echo "workload_identity_provider=$WORKLOAD_IDENTITY_PROVIDER" >> $GITHUB_OUTPUT
+
+            - id: google_auth_compute
+              name: Authenticate with Google Cloud
+              uses: google-github-actions/auth@v3
+              with:
+                  workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
+                  service_account: ${{ inputs.service_account_compute}}
+
+            - name: Setup Python
+              uses: actions/setup-python@v6
+              with:
+                  python-version: "3.12"
+                  cache: "pip"
+
+            - name: Install dependencies
+              run: |
+                  pip install -r dask-modules/scripts/validate_data_contract/requirements.txt
+
+            - name: Validate data contracts
+              if: steps.changed_contracts.outputs.changed_files != ''
+              run: |
+                  ENVIRONMENT=${{ inputs.environment }} SERVICE_ACCOUNT=${{ inputs.service_account_compute }} CHANGED_DATA_CONTRACTS="${{ steps.changed_contracts.outputs.changed_files }}" python dask-modules/scripts/validate_data_contract/validate_data_contract.py
+
+            - id: google_auth_deploy
+              name: Authenticate with Google Cloud
+              if: inputs.publish_data_contract
+              uses: google-github-actions/auth@v3
+              with:
+                  workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
+                  service_account: ${{ inputs.service_account_deploy}}
+
+            - name: "Set up Cloud SDK"
+              if: inputs.publish_data_contract
+              uses: "google-github-actions/setup-gcloud@v3"
+              with:
+                  version: ">= 363.0.0"
+
+            - name: Install mikefarah/yq
+              if: inputs.publish_data_contract
+              run: |
+                  wget https://github.com/mikefarah/yq/releases/download/v4.43.1/yq_linux_amd64 -O /usr/local/bin/yq
+                  chmod +x /usr/local/bin/yq
+
+            - name: Publish changed contracts as JSON to Pub/Sub
+              if: steps.changed_contracts.outputs.changed_files != '' && inputs.publish_data_contract
+              run: |
+                  IFS=',' read -ra FILES <<< "${{ steps.changed_contracts.outputs.changed_files }}"
+                  for file in "${FILES[@]}"; do
+                    if [[ -z "$file" ]]; then
+                        continue
+                    fi
+                    JSON_CONTENT=$(yq -o json "$file")
+                    if [[ -z "$JSON_CONTENT" ]]; then
+                        echo "Skipping $file: no JSON content"
+                        continue
+                    fi
+                    echo "Publishing $file"
+                    if [[ "${{ inputs.environment }}" == "prod" ]]; then
+                        TOPIC="projects/dataplattform-prod-9b1d/topics/data-contract-topic"
+                    else
+                        TOPIC="projects/dataplattform-dev-d335/topics/data-contract-topic"
+                    fi
+                    gcloud pubsub topics publish "$TOPIC" --message "$JSON_CONTENT"
+                  done
