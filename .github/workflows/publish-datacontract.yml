@@ -1,4 +1,4 @@
-name: Publish datacontract
+name: Publish data contract
 on:
     workflow_call:
         inputs:
@@ -7,33 +7,33 @@ on:
                 required: true
                 type: string
             service_account_deploy:
-                description: "The GCP service account connected to the identity pool that will be used to deploy the datacontract."
+                description: "The GCP service account connected to the identity pool that will be used to deploy the data contract."
                 required: true
                 type: string
             service_account_compute:
-                description: "The GCP service account connected to the identity pool that will be used to validate the datacontract against databricks."
+                description: "The GCP service account connected to the identity pool that will be used to validate the data contract against databricks."
                 required: true
                 type: string
-            datacontract_path:
-                description: "The path to the directory containing datacontract YAML files to publish. Example: src/contracts"
+            data_contract_path:
+                description: "The path to the directory containing data contract YAML files to publish. Example: src/contracts"
                 required: true
                 type: string
             environment:
                 description: "The target environment for deployment, e.g., 'dev' or 'prod'."
                 required: true
                 type: string
-            publish_datacontract:
-                description: "Whether to publish the datacontract to Pub/Sub. Set to false to only validate the datacontract without publishing."
+            publish_data_contract:
+                description: "Whether to publish the data contract to Pub/Sub. Set to false to only validate the data contract without publishing."
                 required: true
                 type: boolean
                 default: false
             last_published_ref:
-                description: "The git ref (branch, tag or commit id) used to find the last published datacontract. Used to find changed datacontract files. Example: main"
+                description: "The git ref (branch, tag or commit id) used to find the last published data contract. Used to find changed data contract files. Example: main"
                 required: false
                 type: string
 
 jobs:
-    publish-datacontract:
+    publish-data_contract:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -48,17 +48,17 @@ jobs:
                   git fetch origin main
 
                   if [[ "${{ inputs.last_published_ref }}" ]]; then
-                    CHANGED_FILES="$(git diff --name-only ${{ inputs.last_published_ref }}...${{ github.ref }} | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
+                    CHANGED_FILES="$(git diff --name-only ${{ inputs.last_published_ref }}...${{ github.ref }} | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                   elif [[ "${{ github.event_name }}" == 'release' ]]; then
                     PREVIOUS_RELEASE=$(git tag --sort version:refname | tail -n 2 | head -n 1)
                     CURRENT_RELEASE=$(git tag --sort version:refname | tail -n 1 )
                       if [[ "$PREVIOUS_RELEASE" == "$CURRENT_RELEASE" ]]; then
-                        CHANGED_FILES="$(git ls-files | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
+                        CHANGED_FILES="$(git ls-files | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                       else
-                        CHANGED_FILES="$(git diff --name-only $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
+                        CHANGED_FILES="$(git diff --name-only $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                       fi
                   else
-                    CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.datacontract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
+                    CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                   fi
 
                   CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',')"
@@ -97,35 +97,35 @@ jobs:
 
             - name: Install dependencies
               run: |
-                  pip install -r dask-modules/scripts/validate_datacontract/requirements.txt
+                  pip install -r dask-modules/scripts/validate_data_contract/requirements.txt
 
-            - name: Validate datacontracts
+            - name: Validate data contracts
               if: steps.changed_contracts.outputs.changed_files != ''
               run: |
-                  ENVIRONMENT=${{ inputs.environment }} SERVICE_ACCOUNT=${{ inputs.service_account_compute }} CHANGED_DATACONTRACTS="${{ steps.changed_contracts.outputs.changed_files }}" python dask-modules/scripts/validate_datacontract/validate_datacontract.py
+                  ENVIRONMENT=${{ inputs.environment }} SERVICE_ACCOUNT=${{ inputs.service_account_compute }} CHANGED_DATA_CONTRACTS="${{ steps.changed_contracts.outputs.changed_files }}" python dask-modules/scripts/validate_data_contract/validate_data_contract.py
 
             - id: google_auth_deploy
               name: Authenticate with Google Cloud
-              if: inputs.publish_datacontract
+              if: inputs.publish_data_contract
               uses: google-github-actions/auth@v3
               with:
                   workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
                   service_account: ${{ inputs.service_account_deploy}}
 
             - name: "Set up Cloud SDK"
-              if: inputs.publish_datacontract
+              if: inputs.publish_data_contract
               uses: "google-github-actions/setup-gcloud@v3"
               with:
                   version: ">= 363.0.0"
 
             - name: Install mikefarah/yq
-              if: inputs.publish_datacontract
+              if: inputs.publish_data_contract
               run: |
                   wget https://github.com/mikefarah/yq/releases/download/v4.43.1/yq_linux_amd64 -O /usr/local/bin/yq
                   chmod +x /usr/local/bin/yq
 
             - name: Publish changed contracts as JSON to Pub/Sub
-              if: steps.changed_contracts.outputs.changed_files != '' && inputs.publish_datacontract
+              if: steps.changed_contracts.outputs.changed_files != '' && inputs.publish_data_contract
               run: |
                   IFS=',' read -ra FILES <<< "${{ steps.changed_contracts.outputs.changed_files }}"
                   for file in "${FILES[@]}"; do
