@@ -72,7 +72,7 @@ jobs:
                   fetch-depth: 0
                   repository: kartverket/dask-modules
                   path: dask-modules
-                  ref: ${{ github.ref_name }}
+                  ref: ${{ github.action_ref }}
 
             - name: Create workload identity provider string
               id: create_workload_identity_provider
