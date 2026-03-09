@@ -2,6 +2,10 @@ name: Publish data contract
 on:
     workflow_call:
         inputs:
+            workflow_ref:
+                description: "The git ref (branch, tag or commit id) of the workflow which you want to run"
+                required: true
+                type: string
             auth_project_number:
                 description: "The GCP Project Number used for authentication. A 12-digit number used as a unique identifier for the project. Used to find workload identity pool."
                 required: true
@@ -66,20 +70,13 @@ jobs:
                   echo "\"$CHANGED_FILES_COMMA_SEPARATED\""
                   echo "changed_files=\"$CHANGED_FILES_COMMA_SEPARATED\"" >> $GITHUB_OUTPUT
 
-            - name: Extract workflow ref
-              id: workflow_ref
-              run: |
-                  WORKFLOW_REF="${{ github.job_workflow_ref }}"
-                  REF="${WORKFLOW_REF##*@}"
-                  echo "ref=$REF" >> $GITHUB_OUTPUT
-
             - name: Checkout
               uses: actions/checkout@v6
               with:
                   fetch-depth: 0
                   repository: kartverket/dask-modules
                   path: dask-modules
-                  ref: ${{ steps.workflow_ref.outputs.ref }}
+                  ref: ${{ inputs.workflow_ref }}
 
             - name: Create workload identity provider string
               id: create_workload_identity_provider
