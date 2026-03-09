@@ -10,7 +10,7 @@ def replace_special_characters(s):
         'ø': 'o',
         'Ø': 'O',
         'å': 'aa',
-        'Å': 'Aa'
+        'Å': 'Aa',
     }
 
     return re.sub(r'[æåÆØÅ]', lambda match: replacements[match.group(0)], s)
@@ -88,48 +88,45 @@ def update_state_bucket(env: str, val_for_env: str) -> None:
 def update_databricks_bundle_yml(division: str, resource_name: str):
     config_path = 'databricks.yml'
 
-    with open(config_path, 'r') as file:
-        lines = [line.replace("plattform_dataprodukter", f"{division}_{resource_name}") for line in
-                 file.readlines()]
-        file.close()
-
-        with open(config_path, 'w') as file:
-            file.writelines(lines)
-            file.close()
+    replace_text_in_file(
+        config_path, 
+        [("plattform_dataprodukter", f"{division}_{resource_name}")],
+    )
 
 
 def update_codeowners(team_name: str, github_team: str):
     codeowners_path = 'CODEOWNERS'
 
-    with open(codeowners_path, 'r') as file:
-        file_content = file.read()
-        file_content = file_content.replace("Team DASK (Dataplattform Statens Kartverk)", f"Team {team_name}")
-        file_content = file_content.replace("@kartverket/dask", f"@kartverket/{github_team}")
-        file_content = file_content.replace("@sondrfos", "<<enter security champion (@username) here>>")
-        file.close()
-
-        with open(codeowners_path, 'w') as file:
-            file.write(file_content)
-            file.close()
+    replace_text_in_file(
+        codeowners_path, 
+        [
+            ("Team DASK (Dataplattform Statens Kartverk)", f"Team {team_name}"),
+            ("@kartverket/dask", f"@kartverket/{github_team}"),
+            ("@sondrfos", "<<enter security champion (@username) here>>"),
+        ],
+    )
 
 
 def update_catalog_info(resource_name: str):
     cataloginfo_path = 'catalog-info.yaml'
 
-    with open(cataloginfo_path, 'r') as file:
-        file_content = file.read()
-        file_content = file_content.replace("dask-monorepo-reference-setup", f'{resource_name}-data-ingestor')
-        file_content = file_content.replace("documentation", "ops")
-        file_content = file_content.replace("dataplattform", resource_name)
-        file.close()
-
-        with open(cataloginfo_path, 'w') as file_out:
-            file_out.write(file_content)
-            file_out.close()
+    replace_text_in_file(
+        cataloginfo_path, 
+        [
+            ("dask-monorepo-reference-setup", f'{resource_name}-data-ingestor'),
+            ("documentation", "ops"),
+            ("dataplattform", resource_name),
+        ],
+    )
 
 
-def configure_github_deploy_workflow(env: str, resource_name: str, project_id: str, project_number: str):
-    workflows_path = '.github/workflows'
+def configure_github_workflows(env: str, resource_name: str, project_id: str, project_number: str):
+    workflow_path = '.github/workflows'
+    workflow_files = [
+        f'{workflow_path}/deploy-{env}.yml',
+        f'{workflow_path}/data-contract-validate-{env}.yml',
+        f'{workflow_path}/data-contract-publish-{env}.yml',
+    ]
 
     deploy_sa_to_replace = {
         "dev": "dataplattform-deploy@dataprodukter-dev-5daa.iam.gserviceaccount.com",
@@ -153,17 +150,27 @@ def configure_github_deploy_workflow(env: str, resource_name: str, project_id: s
         (repo_to_replace, f'{resource_name}-data-ingestor'),
         (project_name_to_replace, resource_name),
     ]
+    for file_path in workflow_files:
+        replace_text_in_file(file_path, replacement_tuples)
 
-    with open(f'{workflows_path}/deploy-{env}.yml') as file:
-        lines = file.readlines()
-        file.close()
 
-        for replacement in replacement_tuples:
-            lines = [line.replace(replacement[0], replacement[1]) for line in lines]
+def configure_data_contracts(team_name: str, github_team: str):
+    data_contract_path = 'src/contracts/dev'
+    contract_paths = [
+        f"{data_contract_path}/2_silver_schema.fylker.yml",
+        f"{data_contract_path}/2_silver_schema.kommuner.yml",
+    ]
 
-        with open(f'{workflows_path}/deploy-{env}.yml', 'w') as file:
-            file.writelines(lines)
-            file.close()
+    for contract_path in contract_paths:
+        replace_text_in_file(
+            contract_path, 
+            [
+                ("dask", f"{github_team}"),
+                ("Dataplattform i Statens Kartverk", f"{team_name}"),
+                ("heidi.furland@kartverket.no", "<<Fyll inn dataeiers e-post her>>"),
+                ("kay.frode.kristiansen@kartverket.no", "<<Fyll inn dataansvarligs e-post her>>"),
+            ],
+        )
 
 
 def edit_file(json_obj: dict):
@@ -185,7 +192,7 @@ def edit_file(json_obj: dict):
         update_tfvar_file(env, resource_name, project_id_for_env, project_number_for_env, division)
         update_repo_name(resource_name)
 
-        configure_github_deploy_workflow(env, resource_name, project_id_for_env, project_number_for_env)
+        configure_github_workflows(env, resource_name, project_id_for_env, project_number_for_env)
 
 
 if __name__ == "__main__":
