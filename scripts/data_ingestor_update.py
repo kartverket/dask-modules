@@ -124,8 +124,7 @@ def configure_github_workflows(env: str, resource_name: str, project_id: str, pr
     workflow_path = '.github/workflows'
     workflow_files = [
         f'{workflow_path}/deploy-{env}.yml',
-        f'{workflow_path}/data-contract-validate-{env}.yml',
-        f'{workflow_path}/data-contract-publish-{env}.yml',
+        f'{workflow_path}/data-contract-validate-publish-{env}.yml',
     ]
 
     deploy_sa_to_replace = {
