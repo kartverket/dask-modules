@@ -182,6 +182,7 @@ def edit_file(json_obj: dict):
     update_codeowners(team_name, github_team)
     update_databricks_bundle_yml(division, resource_name)
     update_catalog_info(resource_name)
+    configure_data_contracts(team_name, github_team)
 
     for env in envs:
         state_bucket_for_env = json_obj.get("gcp_state_buckets")[env]
