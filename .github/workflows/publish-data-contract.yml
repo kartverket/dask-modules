@@ -67,8 +67,11 @@ jobs:
                   echo "changed_files=\"$CHANGED_FILES_COMMA_SEPARATED\"" >> $GITHUB_OUTPUT
 
             - name: Extract workflow ref
-              id: get_action_ref
-              run: echo "ref=${{ github.action_ref }}" >> $GITHUB_OUTPUT
+              id: workflow_ref
+              run: |
+                  WORKFLOW_REF="${{ github.job_workflow_ref }}"
+                  REF="${WORKFLOW_REF##*@}"
+                  echo "ref=$REF" >> $GITHUB_OUTPUT
 
             - name: Checkout
               uses: actions/checkout@v6
@@ -76,7 +79,7 @@ jobs:
                   fetch-depth: 0
                   repository: kartverket/dask-modules
                   path: dask-modules
-                  ref: ${{ steps.get_action_ref.outputs.ref }}
+                  ref: ${{ steps.workflow_ref.outputs.ref }}
 
             - name: Create workload identity provider string
               id: create_workload_identity_provider
