@@ -103,6 +103,18 @@ jobs:
               run: |
                   pip install -r dask-modules/scripts/validate_data_contract/requirements.txt
 
+            - name: Validate each changed contract file using kv-datacontract-validator
+              if: steps.changed_contracts.outputs.changed_files != ''
+              run: |
+                  pipx install git+https://github.com/kartverket/kv-datacontracts-validator.git@v0.2.0#subdirectory=datacontract-validator
+
+                  IFS=',' read -ra FILES <<< "${{ steps.changed_contracts.outputs.changed_files }}"
+                  for file in "${FILES[@]}"; do
+                  if [[ -n "$file" ]]; then
+                      kvdcv -f "$file"
+                  fi
+                  done
+
             - name: Validate data contracts
               if: steps.changed_contracts.outputs.changed_files != ''
               run: |
