@@ -43,12 +43,6 @@ jobs:
     publish-data_contract:
         runs-on: ubuntu-latest
         steps:
-            - uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
-              id: octo-sts
-              with:
-                  scope: kartverket/kv-datacontracts-validator
-                  identity: kartverket_repos
-
             - name: Checkout
               uses: actions/checkout@v6
               with:
@@ -108,9 +102,11 @@ jobs:
                   python-version: "3.12"
                   cache: "pip"
 
-            - name: Install dependencies
-              run: |
-                  pip install -r dask-modules/scripts/validate_data_contract/requirements.txt
+            - uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
+              id: octo-sts
+              with:
+                  scope: kartverket/kv-datacontracts-validator
+                  identity: kartverket_repos
 
             - name: Validate each changed contract file using kv-datacontract-validator
               if: steps.changed_contracts.outputs.changed_files != ''
@@ -123,6 +119,10 @@ jobs:
                       kvdcv -f "$file"
                   fi
                   done
+
+            - name: Install dependencies
+              run: |
+                  pip install -r dask-modules/scripts/validate_data_contract/requirements.txt
 
             - name: Validate data contracts
               if: steps.changed_contracts.outputs.changed_files != ''
