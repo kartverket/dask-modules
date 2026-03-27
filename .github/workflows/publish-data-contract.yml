@@ -113,13 +113,7 @@ jobs:
               if: steps.changed_contracts.outputs.changed_files != ''
               run: |
                   pipx install git+https://oauth2:${{ steps.octo-sts.outputs.token }}@github.com/kartverket/kv-datacontracts-validator.git@main#subdirectory=datacontract-validator
-
-                  IFS=',' read -ra FILES <<< "${{ steps.changed_contracts.outputs.changed_files }}"
-                  for file in "${FILES[@]}"; do
-                  if [[ -n "$file" ]]; then
-                      kvdcv -f "$file"
-                  fi
-                  done
+                  kvdcv --files ${{ steps.changed_contracts.outputs.changed_files }}
 
             - name: Install dependencies
               run: |
