@@ -38,6 +38,7 @@ on:
 
 permissions:
     id-token: write # Required for Octo STS
+    contents: read
 
 jobs:
     publish-data_contract:
