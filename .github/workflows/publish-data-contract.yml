@@ -69,7 +69,7 @@ jobs:
                     CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                   fi
 
-                  CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',')"
+                  CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')"
                   echo "Changed contract files:"
                   echo "\"$CHANGED_FILES_COMMA_SEPARATED\""
                   echo "changed_files=\"$CHANGED_FILES_COMMA_SEPARATED\"" >> $GITHUB_OUTPUT
