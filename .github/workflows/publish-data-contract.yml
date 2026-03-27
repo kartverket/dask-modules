@@ -115,7 +115,7 @@ jobs:
             - name: Validate each changed contract file using kv-datacontract-validator
               if: steps.changed_contracts.outputs.changed_files != ''
               run: |
-                  pipx install git+https://oauth2:${{ steps.octo-sts.outputs.token }}@github.com/kartverket/kv-datacontracts-validator.git@td-2016-add-chainguard#subdirectory=datacontract-validator
+                  pipx install git+https://oauth2:${{ steps.octo-sts.outputs.token }}@github.com/kartverket/kv-datacontracts-validator.git@main#subdirectory=datacontract-validator
 
                   IFS=',' read -ra FILES <<< "${{ steps.changed_contracts.outputs.changed_files }}"
                   for file in "${FILES[@]}"; do
