@@ -47,7 +47,7 @@ jobs:
               id: octo-sts
               with:
                   scope: kartverket/kv-datacontract-validator
-                  identity: kartverket-repos
+                  identity: kartverket_repos
 
             - name: Checkout
               uses: actions/checkout@v6
