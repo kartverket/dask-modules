@@ -13,9 +13,9 @@ on:
         required: true
         type: string
       version_file_directory:
-        description: "Directory where version file with image ref is stored"
+        description: Directory where version file with image ref is stored
         required: false
-        default: "./versions"
+        default: ./versions
         type: string
       identity:
         required: true
