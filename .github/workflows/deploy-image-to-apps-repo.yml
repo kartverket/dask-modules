@@ -3,7 +3,7 @@ name: Deploy image to apps repo
 on:
   workflow_call:
     inputs:
-      context_path:
+      image_url:
         required: true
         type: string
       version_file_name:
@@ -24,23 +24,18 @@ on:
         type: string
         default: false
 
-    outputs:
-      image_url:
-        value: ${{ jobs.build.outputs.image_url }}
-
 env:
   REGISTRY: ghcr.io
   APPS_REPO: ${{ inputs.apps_repo }}
-  BRANCH: ${{ github.head_ref || github.ref_name }}
-  IDENTITY: ${{ inputs.identity }}
-  MANUAL_DEPLOY_TRIGGER: ${{ inputs.manual_deploy_trigger }}
 
 jobs:
-  build:
-    name: Build container image
+  deploy-image-to-apps-repo:
+    name: Deploy image to apps repo
     runs-on: ubuntu-latest
     outputs:
       image_url: ${{ steps.set_output.outputs.image_url }}
+    env:
+      IDENTITY: ${{ inputs.identity }}
     steps:
       - uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f
         id: octo-sts
@@ -56,6 +51,9 @@ jobs:
           token: ${{ steps.octo-sts.outputs.token }}
 
       - name: Create file
+        env:
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+          MANUAL_DEPLOY_TRIGGER: ${{ inputs.manual_deploy_trigger }}
         run: |
           setup_directory () {
               DIRECTORY=${{ inputs.version_file_directory }}
@@ -78,8 +76,3 @@ jobs:
             git commit -m "Update ${{ inputs.version_file_name }}"
             git push
           fi
-
-      - name: Set output with build values
-        id: set_output
-        run: |
-          echo "image_url=${{ env.REGISTRY }}/${{ github.repository }}@${{ steps.build-docker.outputs.digest }}" >> $GITHUB_OUTPUT
