@@ -1,0 +1,62 @@
+name: Build and publish Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      context_path:
+        required: true
+        type: string
+
+    outputs:
+      image_url:
+        value: ${{ jobs.build.outputs.image_url }}
+
+env:
+  REGISTRY: ghcr.io
+  CONTEXT_PATH: ${{ inputs.context_path }}
+
+jobs:
+  build:
+    name: Build and publish container image
+    runs-on: ubuntu-latest
+    outputs:
+      image_url: ${{ steps.set_output.outputs.image_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Check for changes in context path
+        id: check_changes
+        run: |
+          if git diff --quiet HEAD^ HEAD -- ${{ env.CONTEXT_PATH }} && [ "${{ env.MANUAL_DEPLOY_TRIGGER }}" = false ]; then
+            echo "No changes in ${{ env.CONTEXT_PATH }}. Skipping build."
+            echo "skip_build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip_build=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Login to Github Container Registry
+        if: steps.check_changes.outputs.skip_build == 'false'
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        if: steps.check_changes.outputs.skip_build == 'false'
+        id: build-docker
+        uses: docker/build-push-action@v5
+        with:
+          file: ${{ env.CONTEXT_PATH }}/Dockerfile
+          context: ${{ env.CONTEXT_PATH }}
+          push: ${{ !github.event.pull_request.draft }}
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}:latest
+
+      - name: Set output with build values
+        if: steps.check_changes.outputs.skip_build == 'false'
+        id: set_output
+        run: |
+          echo "image_url=${{ env.REGISTRY }}/${{ github.repository }}@${{ steps.build-docker.outputs.digest }}" >> "$GITHUB_OUTPUT"

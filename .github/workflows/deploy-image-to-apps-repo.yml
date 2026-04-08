@@ -1,0 +1,79 @@
+name: Deploy image to apps repo
+
+on:
+  workflow_call:
+    inputs:
+      image_url:
+        required: true
+        type: string
+      version_file_name:
+        required: true
+        type: string
+      apps_repo:
+        required: true
+        type: string
+      version_file_directory:
+        description: Directory where version file with image ref is stored
+        required: false
+        default: ./versions
+        type: string
+      identity:
+        required: true
+        type: string
+      manual_deploy_trigger:
+        type: string
+        default: false
+
+env:
+  REGISTRY: ghcr.io
+  APPS_REPO: ${{ inputs.apps_repo }}
+  VERSION_FILE_NAME: ${{ inputs.version_file_name }}
+
+jobs:
+  deploy-image-to-apps-repo:
+    name: Deploy image to apps repo
+    runs-on: ubuntu-latest
+    env:
+      IDENTITY: ${{ inputs.identity }}
+    steps:
+      - uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
+        id: octo-sts
+        with:
+          scope: kartverket/${{ env.APPS_REPO }}
+          identity: ${{ env.IDENTITY }}
+
+      - name: Checkout the repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: kartverket/${{ env.APPS_REPO }}
+          ref: main
+          token: ${{ steps.octo-sts.outputs.token }}
+
+      - name: Create file
+        env:
+          IMAGE_URL: ${{ inputs.image_url }}
+          VERSION_FILE_DIRECTORY: ${{ inputs.version_file_directory }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+          MANUAL_DEPLOY_TRIGGER: ${{ inputs.manual_deploy_trigger }}
+        run: |
+          setup_directory () {
+              DIRECTORY=${{ env.VERSION_FILE_DIRECTORY }}
+              touch $DIRECTORY/${{ env.VERSION_FILE_NAME }}
+              echo "\"${{ env.IMAGE_URL }}\"" > $DIRECTORY/${{ env.VERSION_FILE_NAME }} 
+          }
+
+          if [[ "${{ env.BRANCH }}" == "main" ]] || [[ "${{env.MANUAL_DEPLOY_TRIGGER}}" == "true" ]]; then
+              setup_directory 
+          fi
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.email "noreply@kartverket.no"
+          git config --global user.name "DASK CI"
+          git add .
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Update ${{ env.VERSION_FILE_NAME }}"
+            git push
+          fi
