@@ -27,13 +27,12 @@ on:
 env:
   REGISTRY: ghcr.io
   APPS_REPO: ${{ inputs.apps_repo }}
+  VERSION_FILE_NAME: ${{ inputs.version_file_name }}
 
 jobs:
   deploy-image-to-apps-repo:
     name: Deploy image to apps repo
     runs-on: ubuntu-latest
-    outputs:
-      image_url: ${{ steps.set_output.outputs.image_url }}
     env:
       IDENTITY: ${{ inputs.identity }}
     steps:
@@ -52,13 +51,15 @@ jobs:
 
       - name: Create file
         env:
+          IMAGE_URL: ${{ inputs.image_url }}
+          VERSION_FILE_DIRECTORY: ${{ inputs.version_file_directory }}
           BRANCH: ${{ github.head_ref || github.ref_name }}
           MANUAL_DEPLOY_TRIGGER: ${{ inputs.manual_deploy_trigger }}
         run: |
           setup_directory () {
-              DIRECTORY=${{ inputs.version_file_directory }}
-              touch $DIRECTORY/${{ inputs.version_file_name }}
-              echo "\"${{ env.REGISTRY }}/${{ github.repository }}@${{ steps.build-docker.outputs.digest }}\"" > $DIRECTORY/${{ inputs.version_file_name }} 
+              DIRECTORY=${{ env.VERSION_FILE_DIRECTORY }}
+              touch $DIRECTORY/${{ env.VERSION_FILE_NAME }}
+              echo "\"${{ env.IMAGE_URL }}\"" > $DIRECTORY/${{ env.VERSION_FILE_NAME }} 
           }
 
           if [[ "${{ env.BRANCH }}" == "main" ]] || [[ "${{env.MANUAL_DEPLOY_TRIGGER}}" == "true" ]]; then
@@ -73,6 +74,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "Update ${{ inputs.version_file_name }}"
+            git commit -m "Update ${{ env.VERSION_FILE_NAME }}"
             git push
           fi
