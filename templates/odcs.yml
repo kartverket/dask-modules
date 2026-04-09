@@ -9,7 +9,7 @@ customProperties:
   - property: "validationVersion"
     value: "1.0.0"
   - property: "accessRights"
-    value: <sett gyldig verdi for tilgang>
+    value: <sett gyldig verdi for access right, se kv-datacontract-validator>
 
 servers:
   - id: databricks-server
