@@ -5,6 +5,12 @@ dataProduct: <Fyll inn catalog.schema.table>
 version: 0.0.1
 status: active
 
+customProperties:
+  - property: "validationVersion"
+    value: "1.0.0"
+  - property: "accessRights"
+    value: <sett gyldig verdi for tilgang>
+
 servers:
   - id: databricks-server
     server: databricks-server
