@@ -36,6 +36,10 @@ on:
                 required: false
                 type: string
 
+permissions:
+    id-token: write # Required for Octo STS
+    contents: read
+
 jobs:
     publish-data_contract:
         runs-on: ubuntu-latest
@@ -65,7 +69,7 @@ jobs:
                     CHANGED_FILES="$(git diff --name-only origin/main...HEAD | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                   fi
 
-                  CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',')"
+                  CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')"
                   echo "Changed contract files:"
                   echo "\"$CHANGED_FILES_COMMA_SEPARATED\""
                   echo "changed_files=\"$CHANGED_FILES_COMMA_SEPARATED\"" >> $GITHUB_OUTPUT
@@ -98,6 +102,18 @@ jobs:
               with:
                   python-version: "3.12"
                   cache: "pip"
+
+            - uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
+              id: octo-sts
+              with:
+                  scope: kartverket/kv-datacontracts-validator
+                  identity: kartverket_repos
+
+            - name: Validate each changed contract file using kv-datacontract-validator
+              if: steps.changed_contracts.outputs.changed_files != ''
+              run: |
+                  pipx install git+https://oauth2:${{ steps.octo-sts.outputs.token }}@github.com/kartverket/kv-datacontracts-validator.git@v1.0.0#subdirectory=datacontract-validator
+                  kvdcv --files ${{ steps.changed_contracts.outputs.changed_files }}
 
             - name: Install dependencies
               run: |
