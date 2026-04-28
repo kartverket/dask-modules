@@ -1,7 +1,11 @@
 import os
 from databricks.sdk import WorkspaceClient
+from rich.console import Console
 from datacontract.data_contract import DataContract
+from datacontract.output.test_results_writer import write_test_result
 from pathlib import Path
+
+console = Console()
 
 if os.environ["ENVIRONMENT"] == "dev":
     os.environ["DATACONTRACT_DATABRICKS_SERVER_HOSTNAME"] = (
@@ -44,8 +48,13 @@ for file in changed_data_contracts_list_cleaned:
         run = data_contract.test()
         if not run.has_passed():
             has_failed = True
-            print(f"Data contract {file} failed tests:")
-            print(run.pretty_logs())
+        write_test_result(
+            run,
+            console=console,
+            output_format=None,
+            output_path=None,
+            data_contract=data_contract.get_data_contract(),
+        )
 
 if has_failed:
     raise Exception("Some data contracts failed tests. See logs for details.")
