@@ -53,7 +53,7 @@ for file in changed_data_contracts_list_cleaned:
             console=console,
             output_format=None,
             output_path=None,
-            data_contract=data_contract,
+            data_contract=data_contract.get_data_contract(),
         )
 
 if has_failed:
