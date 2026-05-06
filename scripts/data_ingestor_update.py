@@ -47,7 +47,7 @@ def update_repo_name(resource_name: str) -> None:
     for change_file in files:
         replace_text_in_file(
             change_file,
-            [("dask-monorepo-reference-setup", f"{resource_name}-data-ingestor")],
+            [("dataplattform-kom-i-gang", f"{resource_name}-data-ingestor")],
         )
 
 
@@ -113,7 +113,7 @@ def update_catalog_info(resource_name: str):
     replace_text_in_file(
         cataloginfo_path, 
         [
-            ("dask-monorepo-reference-setup", f'{resource_name}-data-ingestor'),
+            ("dataplattform-kom-i-gang", f'{resource_name}-data-ingestor'),
             ("documentation", "ops"),
             ("dataplattform", resource_name),
         ],
@@ -139,7 +139,7 @@ def configure_github_workflows(env: str, resource_name: str, project_id: str, pr
         "dev": "167289175624",
         "prod": "220770510673"
     }
-    repo_to_replace = "dask-monorepo-reference-setup"
+    repo_to_replace = "dataplattform-kom-i-gang"
     project_name_to_replace = "dataprodukter"
 
     replacement_tuples = [
