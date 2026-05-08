@@ -43,6 +43,8 @@ permissions:
 jobs:
     publish-data_contract:
         runs-on: ubuntu-latest
+        env:
+            COLUMNS: 200
         steps:
             - name: Checkout
               uses: actions/checkout@v6
