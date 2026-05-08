@@ -112,7 +112,7 @@ jobs:
             - name: Validate each changed contract file using kv-datacontract-validator
               if: steps.changed_contracts.outputs.changed_files != ''
               run: |
-                  pipx install git+https://oauth2:${{ steps.octo-sts.outputs.token }}@github.com/kartverket/kv-datacontracts-validator.git@v1.0.0#subdirectory=datacontract-validator
+                  pipx install git+https://oauth2:${{ steps.octo-sts.outputs.token }}@github.com/kartverket/kv-datacontracts-validator.git@main#subdirectory=datacontract-validator
                   kvdcv --files ${{ steps.changed_contracts.outputs.changed_files }}
 
             - name: Install dependencies
@@ -161,7 +161,7 @@ jobs:
                     if [[ "${{ inputs.environment }}" == "prod" ]]; then
                         TOPIC="projects/dataplattform-prod-9b1d/topics/data-contract-topic"
                     else
-                        TOPIC="projects/dataplattform-dev-d335/topics/data-contract-topic"
+                        TOPIC="projects/dataplattform-dev-d335/topics/data-contract-test-topic"
                     fi
                     gcloud pubsub topics publish "$TOPIC" --message "$JSON_CONTENT"
                   done
