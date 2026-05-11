@@ -124,7 +124,11 @@ jobs:
             - name: Validate data contracts
               if: steps.changed_contracts.outputs.changed_files != ''
               run: |
-                  ENVIRONMENT=${{ inputs.environment }} SERVICE_ACCOUNT=${{ inputs.service_account_compute }} CHANGED_DATA_CONTRACTS="${{ steps.changed_contracts.outputs.changed_files }}" python dask-modules/scripts/validate_data_contract/validate_data_contract.py
+                  python dask-modules/scripts/validate_data_contract/validate_data_contract.py
+              env:
+                  ENVIRONMENT: ${{ inputs.environment }}
+                  SERVICE_ACCOUNT: ${{ inputs.service_account_compute }}
+                  CHANGED_DATA_CONTRACTS: ${{ steps.changed_contracts.outputs.changed_files }}
 
             - id: google_auth_deploy
               name: Authenticate with Google Cloud
