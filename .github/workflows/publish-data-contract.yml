@@ -153,8 +153,12 @@ jobs:
             - name: Publish changed contracts as JSON to Pub/Sub
               if: steps.changed_contracts.outputs.changed_files != '' && inputs.publish_data_contract
               run: |
-                  IFS=',' read -ra FILES <<< "${{ steps.changed_contracts.outputs.changed_files }}"
+                  IFS=',' read -ra FILES <<< "$CHANGED_DATA_CONTRACTS"
                   for file in "${FILES[@]}"; do
+                     # Strip any surrounding quotes that the action may have added
+                     file="${file//\"/}"
+                     file="${file# }"   # trim leading space
+                     file="${file% }"   # trim trailing space
                     if [[ -z "$file" ]]; then
                         continue
                     fi
@@ -171,3 +175,5 @@ jobs:
                     fi
                     gcloud pubsub topics publish "$TOPIC" --message "$JSON_CONTENT"
                   done
+              env:
+                CHANGED_DATA_CONTRACTS: ${{ steps.changed_contracts.outputs.changed_files }}
