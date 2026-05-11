@@ -155,10 +155,7 @@ jobs:
               run: |
                   IFS=',' read -ra FILES <<< "$CHANGED_DATA_CONTRACTS"
                   for file in "${FILES[@]}"; do
-                     # Strip any surrounding quotes that the action may have added
-                     file="${file//\"/}"
-                     file="${file# }"   # trim leading space
-                     file="${file% }"   # trim trailing space
+                        file="${file//\"/}"  # Strip any surrounding quotes that the action have added
                     if [[ -z "$file" ]]; then
                         continue
                     fi
