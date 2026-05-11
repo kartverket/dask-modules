@@ -36,9 +36,9 @@ os.environ["DATACONTRACT_DATABRICKS_TOKEN"] = str(
 
 changed_data_contracts = os.environ["CHANGED_DATA_CONTRACTS"]
 changed_data_contracts_list_cleaned = [
-    Path(file.strip())
+    Path(file.strip().strip('"'))
     for file in (changed_data_contracts.split(",") if changed_data_contracts else [])
-    if file.strip()
+    if file.strip().strip('"')
 ]
 
 has_failed = False
