@@ -41,17 +41,16 @@ permissions:
     contents: read
 
 jobs:
-    publish-data_contract:
+    get-changed-files:
         runs-on: ubuntu-latest
-        env:
-            COLUMNS: 200
+        outputs:
+            changed_files: ${{ steps.changed_contracts.outputs.changed_files }}
         steps:
             - name: Checkout
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.1
               with:
                   fetch-depth: 0
                   ref: ${{ github.ref }}
-
             - name: Get changed contract files
               id: changed_contracts
               run: |
@@ -72,11 +71,23 @@ jobs:
                   fi
 
                   CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')"
-                  echo "Changed contract files:"
-                  echo "\"$CHANGED_FILES_COMMA_SEPARATED\""
+                  echo "Changed contract files: $CHANGED_FILES_COMMA_SEPARATED"
                   echo "changed_files=$CHANGED_FILES_COMMA_SEPARATED" >> $GITHUB_OUTPUT
 
-            - name: Checkout
+    publish-data_contract:
+        needs: get-changed-files
+        if: needs.get-changed-files.outputs.changed_files != ''
+        runs-on: ubuntu-latest
+        env:
+            COLUMNS: 200
+        steps:
+            - name: Checkout main repository
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.1
+              with:
+                  fetch-depth: 0
+                  ref: ${{ github.ref }}
+
+            - name: Checkout dask-modules
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.1
               with:
                   fetch-depth: 0
@@ -114,20 +125,19 @@ jobs:
             - name: Validate each changed contract file using kv-datacontract-validator
               run: |
                   pipx install git+https://oauth2:${{ steps.octo-sts.outputs.token }}@github.com/kartverket/kv-datacontracts-validator.git@main#subdirectory=datacontract-validator
-                  kvdcv --files "${{ steps.changed_contracts.outputs.changed_files }}"
+                  kvdcv --files "${{ needs.get-changed-files.outputs.changed_files }}"
 
             - name: Install dependencies
               run: |
                   pip install -r dask-modules/scripts/validate_data_contract/requirements.txt
 
             - name: Validate data contracts
-              if: steps.changed_contracts.outputs.changed_files != ''
               run: |
                   python dask-modules/scripts/validate_data_contract/validate_data_contract.py
               env:
                   ENVIRONMENT: ${{ inputs.environment }}
                   SERVICE_ACCOUNT: ${{ inputs.service_account_compute }}
-                  CHANGED_DATA_CONTRACTS: ${{ steps.changed_contracts.outputs.changed_files }}
+                  CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
 
             - id: google_auth_deploy
               name: Authenticate with Google Cloud
@@ -171,4 +181,4 @@ jobs:
                       gcloud pubsub topics publish "$TOPIC" --message "$JSON_CONTENT"
                   done
               env:
-                  CHANGED_DATA_CONTRACTS: ${{ steps.changed_contracts.outputs.changed_files }}
+                  CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
