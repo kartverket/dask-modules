@@ -46,7 +46,7 @@ jobs:
         outputs:
             changed_files: ${{ steps.changed_contracts.outputs.changed_files }}
         steps:
-            - name: Checkout
+            - name: Checkout caller repository
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.1
               with:
                   fetch-depth: 0
@@ -82,7 +82,7 @@ jobs:
         env:
             COLUMNS: 200
         steps:
-            - name: Checkout main repository
+            - name: Checkout caller repository
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.1
               with:
                   fetch-depth: 0
