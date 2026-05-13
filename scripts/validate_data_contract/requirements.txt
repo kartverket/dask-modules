@@ -1,2 +1,2 @@
-databricks-sdk==0.85.0
-datacontract-cli[databricks]==0.12.1
+databricks-sdk==0.105.0
+datacontract-cli[databricks]==0.12.2
