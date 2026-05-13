@@ -125,7 +125,7 @@ jobs:
 
             - name: Validate each changed contract file using kv-datacontract-validator
               run: |
-                  pipx install git+https://oauth2:${{ steps.octo-sts.outputs.token }}@github.com/kartverket/kv-datacontracts-validator.git@v1.0.0#subdirectory=datacontract-validator
+                  pipx install git+https://oauth2:${{ steps.octo-sts.outputs.token }}@github.com/kartverket/kv-datacontracts-validator.git@v1.1.1#subdirectory=datacontract-validator
                   kvdcv --files "${{ needs.get-changed-files.outputs.changed_files }}"
 
             - name: Install dependencies
