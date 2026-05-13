@@ -1,36 +1,32 @@
 apiVersion: v3.1.0
 kind: DataContract
-id: <Generer en unik id for datakontrakten, f.eks. en UUID>
-dataProduct: <Fyll inn catalog.schema.table>
-version: 0.0.1
+id: <Generer en UUID for datakontrakten>
+dataProduct: <Fyll inn navn på dataprodukt>
+version: 0.1.0
 status: active
 
 customProperties:
   - property: "validationVersion"
-    value: "1.0.0"
+    value: "1.1.0"
   - property: "accessRights"
     value: <sett gyldig verdi for access right, se kv-datacontract-validator>
 
 servers:
-  - id: databricks-server
-    server: databricks-server
+  - server: databricks
     type: databricks
     catalog: <fyll inn catalog>
     schema: <fyll inn schema>
 
 team:
-  id: <team_id>
-  name: <Visningnavn for teamet>
+  name: "AAD - TF - TEAM - <fyll inn teamnavn>"
   members:
-    - username: <e-post til dataeier>
-      role: dataeier
-    - username: <e-post til dataansvarlig>
-      role: dataansvarlig
+    - username: <e-post til data owner>
+      role: data_owner
+    - username: <e-post til data steward>
+      role: data_steward
 
 description:
   purpose: <Beskriv formålet med denne datakontrakten>
-  usage: <Beskriv hvordan dataene skal brukes>
-  limitations: <Beskriv eventuelle begrensninger>
 
 schema:
   - name: <fyll inn tabellnavn>
@@ -42,5 +38,12 @@ schema:
       - name: <fyll inn feltnavn>
         logicalType: <fyll inn logisk type>
         description: <Beskriv feltet>
+
+slaProperties:
+  - property: generalAvailability
+    value: "<fyll inn dato for når dataene skal være tilgjengelige>"
+  - property: frequency
+    value: <sett gyldig verdi for oppdateringsfrekvens>
+    unit: <sett gyldig enhet for oppdateringsfrekvens>
 #
 # Se https://bitol-io.github.io/open-data-contract-standard/latest/ for mer informasjon
