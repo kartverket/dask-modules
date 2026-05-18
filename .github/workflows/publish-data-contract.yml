@@ -67,7 +67,7 @@ jobs:
                       else
                         CHANGED_FILES="$(git diff --name-only --diff-filter AMR $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                       fi
-                  elif [[ "${{ github.ref_name }}" == 'main' ]]; then
+                  elif [[ "${{ github.ref_name }}" == 'test-paulmag' ]]; then
                     CHANGED_FILES="$(git ls-files | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                   else
                     CHANGED_FILES="$(git diff --name-only --diff-filter AMR origin/main...HEAD | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
