@@ -67,6 +67,8 @@ jobs:
                       else
                         CHANGED_FILES="$(git diff --name-only --diff-filter AMR $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                       fi
+                  elif [[ "${{ github.ref_name }}" == 'main' ]]; then
+                    CHANGED_FILES="$(git ls-files | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                   else
                     CHANGED_FILES="$(git diff --name-only --diff-filter AMR origin/main...HEAD | grep '^${{ inputs.data_contract_path }}/.*\.\(yml\|yaml\)$' || echo '')"
                   fi
@@ -177,7 +179,7 @@ jobs:
                       if [[ "${{ inputs.environment }}" == "prod" ]]; then
                           TOPIC="projects/dataplattform-prod-9b1d/topics/data-contract-topic"
                       else
-                          TOPIC="projects/dataplattform-dev-d335/topics/data-contract-test-topic"
+                          TOPIC="projects/dataplattform-dev-d335/topics/data-contract-topic"
                       fi
                       gcloud pubsub topics publish "$TOPIC" --message "$JSON_CONTENT"
                   done
