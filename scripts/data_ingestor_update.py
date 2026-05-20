@@ -85,12 +85,17 @@ def update_state_bucket(env: str, val_for_env: str) -> None:
         file.close()
 
 
-def update_databricks_bundle_yml(division: str, resource_name: str):
-    config_path = 'databricks.yml'
+def update_databricks_bundle_yml(
+    division: str, resource_name: str, team_name: str
+) -> None:
+    config_path = "databricks.yml"
 
     replace_text_in_file(
-        config_path, 
-        [("plattform_dataprodukter", f"{division}_{resource_name}")],
+        config_path,
+        [
+            ("plattform_dataprodukter", f"{division}_{resource_name}"),
+            ("AAD - TF - TEAM - Dataplattform", f"AAD - TF - TEAM - {team_name}"),
+        ],
     )
 
 
@@ -179,7 +184,7 @@ def edit_file(json_obj: dict):
     division: str = replace_special_characters(json_obj.get("division"))
 
     update_codeowners(team_name, github_team)
-    update_databricks_bundle_yml(division, resource_name)
+    update_databricks_bundle_yml(division, resource_name, team_name)
     update_catalog_info(resource_name)
     configure_data_contracts(team_name, github_team)
 
