@@ -71,8 +71,8 @@ def update_tfvar_file(
                      f'deploy_service_account = "{resource_name}-deploy@{project_id}.iam.gserviceaccount.com"\n')
         lines.insert(0, f'project_number = "{project_number}"\n')
         lines.insert(0, f'project_id = "{project_id}"\n')
-        lines.insert(0, f'area_name = "{division}"\n')
-        lines.insert(0, f'team_name = "{resource_name}"\n')
+        lines.insert(0, f'division = "{division}"\n')
+        lines.insert(0, f'resource_name = "{resource_name}"\n')
 
         with open(tfvars_path, 'w') as file:
             file.writelines(lines)
