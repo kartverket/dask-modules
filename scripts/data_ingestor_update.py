@@ -158,23 +158,17 @@ def configure_github_workflows(env: str, resource_name: str, project_id: str, pr
         replace_text_in_file(file_path, replacement_tuples)
 
 
-def configure_data_contracts(team_name: str, github_team: str):
-    data_contract_path = 'src/contracts/dev'
-    contract_paths = [
-        f"{data_contract_path}/2_silver_schema.fylker.yml",
-        f"{data_contract_path}/2_silver_schema.kommuner.yml",
-    ]
-
-    for contract_path in contract_paths:
-        replace_text_in_file(
-            contract_path, 
-            [
-                ("dask", f"{github_team}"),
-                ("Dataplattform i Statens Kartverk", f"{team_name}"),
-                ("heidi.furland@kartverket.no", "<<Fyll inn dataeiers e-post her>>"),
-                ("kay.frode.kristiansen@kartverket.no", "<<Fyll inn dataansvarligs e-post her>>"),
-            ],
-        )
+def configure_data_contracts(team_name: str, resource_name: str, division: str):
+    data_contract_path = 'src/contracts/prod/administrative_enheter_eksempel.yml'
+    replace_text_in_file(
+        data_contract_path, 
+        [
+            ("AAD - TF - TEAM - Dataplattform", f"AAD - TF - TEAM - {team_name}"),
+            ("heidi.furland@kartverket.no", "<<Fyll inn dataeiers e-post her>>"),
+            ("kay.frode.kristiansen@kartverket.no", "<<Fyll inn dataansvarligs e-post her>>"),
+            ("plattform_dataprodukter", f"{division}_{resource_name}"),
+        ],
+    )
 
 
 def edit_file(json_obj: dict):
@@ -186,7 +180,7 @@ def edit_file(json_obj: dict):
     update_codeowners(team_name, github_team)
     update_databricks_bundle_yml(division, resource_name, team_name)
     update_catalog_info(resource_name)
-    configure_data_contracts(team_name, github_team)
+    configure_data_contracts(team_name, resource_name, division)
 
     for env in envs:
         state_bucket_for_env = json_obj.get("gcp_state_buckets")[env]
