@@ -94,11 +94,16 @@ jobs:
           git config --global user.email "noreply@kartverket.no"
           rm -rf .git
           git init
-          git add .
-          git commit -m "Initial commit"
-          git branch -M main
           git remote add origin https://x-access-token:${{ steps.github_app.outputs.token }}@github.com/kartverket/${{ env.TARGET_REPO }}.git
-          git push -u origin main
+          git pull origin main || true
+          git add .
+          if git diff --cached --quiet; then
+            echo "No changes to commit, skipping push"
+          else
+            git commit -m "Initial commit"
+            git branch -M main
+            git push -u origin main
+          fi
 
   configure-repo:
     needs: create_and_clone_repo
