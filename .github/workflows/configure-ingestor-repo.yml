@@ -85,10 +85,11 @@ jobs:
           git config --global user.email "noreply@kartverket.no"
           rm -rf .git
           git init
+          git remote add origin https://x-access-token:${{ steps.github_app.outputs.token }}@github.com/kartverket/${{ env.TARGET_REPO }}.git
+          git pull
           git add .
           git commit -m "Initial commit"
           git branch -M main
-          git remote add origin https://x-access-token:${{ steps.github_app.outputs.token }}@github.com/kartverket/${{ env.TARGET_REPO }}.git
           git push -u origin main
 
   configure-repo:
