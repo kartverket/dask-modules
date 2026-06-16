@@ -42,9 +42,14 @@ on:
         default: "main"
         type: string
       python_version:
-        description: "The python version that Databricks and Poetry expects."
+        description: "The python version that Databricks and the chosen package manager expects."
         required: false
         default: "3.11.11"
+        type: string
+      python_package_manager:
+        description: "Python package manager used to build the bundle artifacts. One of 'poetry', 'uv' or 'none'. Default 'poetry' for backwards compatibility."
+        required: false
+        default: "poetry"
         type: string
       validate_only:
         description: "Validate bundle, but do not deploy or destroy"
@@ -129,14 +134,22 @@ jobs:
           databricks bundle validate --target "${{ env.DATABRICKS_BUNDLE_TARGET }}"
 
       - name: Setup Python
-        if: ${{ !inputs.destroy_bundle && !inputs.validate_only }}
+        if: ${{ !inputs.destroy_bundle && !inputs.validate_only && inputs.python_package_manager == 'poetry' }}
         uses: actions/setup-python@v5.6.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Python Poetry Action
-        if: ${{ !inputs.destroy_bundle && !inputs.validate_only }}
+        if: ${{ !inputs.destroy_bundle && !inputs.validate_only && inputs.python_package_manager == 'poetry' }}
         uses: abatilo/actions-poetry@v4.0.0
+
+      # uv installs Python on its own based on .python-version / pyproject.toml,
+      # so actions/setup-python is intentionally skipped for the uv path.
+      - name: Install uv
+        if: ${{ !inputs.destroy_bundle && !inputs.validate_only && inputs.python_package_manager == 'uv' }}
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
 
       - name: Deploy Databricks Asset Bundle yaml
         if: ${{ !inputs.destroy_bundle && !inputs.validate_only }}
