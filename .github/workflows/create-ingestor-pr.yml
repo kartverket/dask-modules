@@ -33,27 +33,31 @@ jobs:
           identity: dask-modules
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2.0.3
+        uses: hashicorp/setup-terraform@633666f66e0061ca3b725c73b2ec20cd13a8fdd1 # v2.0.3
         with:
           terraform_wrapper: false
 
       - name: Checkout current repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           path: dask-modules
+          persist-credentials: false
 
       - name: Checkout target repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: kartverket/${{ env.TARGET_REPO }}
           ref: main
           token: ${{ steps.octo-sts.outputs.token }}
           path: target-repo
+          persist-credentials: false
 
       - name: Modify files
         working-directory: target-repo
         run: |
-          python ../dask-modules/scripts/data_ingestor_update.py --payload '${{ inputs.payload }}'
+          python ../dask-modules/scripts/data_ingestor_update.py --payload '${INPUTS_PAYLOAD}'
+        env:
+          INPUTS_PAYLOAD: ${{ inputs.payload }}
 
       - name: Format Terraform Files
         working-directory: target-repo
@@ -63,7 +67,7 @@ jobs:
         working-directory: target-repo
         run: |
           HASH="$(date +%s | sha256sum | head -c 4)"
-          BRANCH_NAME="dask-onboarding-ci-${{ env.RESOURCE_NAME }}-${HASH}"
+          BRANCH_NAME="dask-onboarding-ci-${RESOURCE_NAME}-${HASH}"
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
 
           git config --global user.name "DASK CI"
@@ -75,15 +79,15 @@ jobs:
 
       - name: Create Pull Request
         id: create_pr
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           github-token: ${{ steps.octo-sts.outputs.token }}
           script: |
 
             const response = await github.rest.pulls.create({
               owner: 'kartverket',
-              repo: '${{ env.TARGET_REPO }}',
-              title: 'Konfigurer repo for ${{ env.RESOURCE_NAME }}',
+              repo: process.env.TARGET_REPO,
+              title: `Konfigurer repo for ${process.env.RESOURCE_NAME}`,
               head: process.env.BRANCH_NAME,
               base: 'main'
             });
@@ -100,17 +104,19 @@ jobs:
       - create_pull_request
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v3
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           workload_identity_provider: projects/149356773285/locations/global/workloadIdentityPools/dataplattform-deploy-pool/providers/github-provider
           service_account: dataplattform-deploy@dataplattform-prod-9b1d.iam.gserviceaccount.com
           project_id: dataplattform-prod-9b1d
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v3
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
         with:
           version: ">= 363.0.0"
 
@@ -118,6 +124,6 @@ jobs:
         env:
           PUBSUB_TOPIC: projects/onboarding-bf12/topics/onboarding-prod
         run: |
-          json_message='{"commit_hash": "${{ github.sha }}", "event_type": "ingestor-configured", "payload": { "resource_name": "${{ env.RESOURCE_NAME }}" }}'
+          json_message='{"commit_hash": "${{ github.sha }}", "event_type": "ingestor-configured", "payload": { "resource_name": "${RESOURCE_NAME}" }}'
 
           gcloud pubsub topics publish ${{ env.PUBSUB_TOPIC }} --message="$json_message"

@@ -120,7 +120,7 @@ jobs:
       WORKLOAD_IDENTITY_PROVIDER: ${{ needs.setup-env.outputs.WORKLOAD_IDENTITY_PROVIDER }}
 
     steps:
-      - uses: octo-sts/action@a26b0c6455c7f13316f29a8766287f939e75f6c8 # v1.0.2
+      - uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
         id: octo-sts
         with:
           scope: kartverket
@@ -128,10 +128,12 @@ jobs:
 
       # Checkout the repository to the GitHub Actions runner
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
@@ -145,10 +147,12 @@ jobs:
           echo TF_CLI_ARGS_apply="$TF_CLI_ARGS_plan" >> "$GITHUB_ENV"
 
       - name: Hack for github internal repo access
-        run: git config --global url."https://x-access-token:${{ steps.octo-sts.outputs.token }}@github.com".insteadOf ssh://git@github.com
+        run: git config --global url."https://x-access-token:${STEPS_OCTO_STS_OUTPUTS_TOKEN}@github.com".insteadOf ssh://git@github.com
+        env:
+          STEPS_OCTO_STS_OUTPUTS_TOKEN: ${{ steps.octo-sts.outputs.token }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
           terraform_version: ${{ inputs.terraform_version }}
 
@@ -159,12 +163,12 @@ jobs:
         run: terraform init
 
       - name: Terraform Validate
-        uses: kartverket/actions/terraform/validate@v0.2.0
+        uses: kartverket/actions/terraform/validate@008c898391de03864eeedbabedd47216e9d29c49 # v0.3.0
         with:
           path: ${{ env.WORKING_DIRECTORY }}
 
       - name: Terraform Plan
-        uses: kartverket/actions/terraform/plan@v0.2.0
+        uses: kartverket/actions/terraform/plan@008c898391de03864eeedbabedd47216e9d29c49 # v0.3.0
         with:
           environment: ${{ env.ENVIRONMENT }}
           path: ${{ env.WORKING_DIRECTORY }}
@@ -172,7 +176,7 @@ jobs:
           comment_on_pr: ${{ env.COMMENT_ON_PR }}
 
       - name: Terraform Apply
-        uses: kartverket/actions/terraform/apply@v0.2.0
+        uses: kartverket/actions/terraform/apply@008c898391de03864eeedbabedd47216e9d29c49 # v0.3.0
         if: inputs.terraform_apply == 'true' || github.ref == 'refs/heads/main' && github.event_name == 'push' && inputs.terraform_apply != 'false'
         with:
           path: ${{ env.WORKING_DIRECTORY }}
