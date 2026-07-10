@@ -125,7 +125,7 @@ jobs:
           service_account: ${{ env.COMPUTE_ACCOUNT }}
           project_id: ${{ env.PROJECT_ID }}
 
-      - uses: databricks/setup-cli@71b5fa6b2b94c9a543658f65ebb6b477913f8626 # main
+      - uses: databricks/setup-cli@bc7e6aabb6006d8d1758bd25ee1a100935c9cb7c # v1.7.0
         name: Setup databricks CLI
 
       - name: Validate Databricks Asset Bundle yaml
