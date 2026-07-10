@@ -43,11 +43,12 @@ jobs:
           identity: ${{ env.IDENTITY }}
 
       - name: Checkout the repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: kartverket/${{ env.APPS_REPO }}
           ref: main
           token: ${{ steps.octo-sts.outputs.token }}
+          persist-credentials: false
 
       - name: Create file
         env:
@@ -57,12 +58,12 @@ jobs:
           MANUAL_DEPLOY_TRIGGER: ${{ inputs.manual_deploy_trigger }}
         run: |
           setup_directory () {
-              DIRECTORY=${{ env.VERSION_FILE_DIRECTORY }}
-              touch $DIRECTORY/${{ env.VERSION_FILE_NAME }}
-              echo "\"${{ env.IMAGE_URL }}\"" > $DIRECTORY/${{ env.VERSION_FILE_NAME }} 
+              DIRECTORY=${VERSION_FILE_DIRECTORY}
+              touch $DIRECTORY/${VERSION_FILE_NAME}
+              echo "\"${IMAGE_URL}\"" > $DIRECTORY/${VERSION_FILE_NAME} 
           }
 
-          if [[ "${{ env.BRANCH }}" == "main" ]] || [[ "${{env.MANUAL_DEPLOY_TRIGGER}}" == "true" ]]; then
+          if [[ "${BRANCH}" == "main" ]] || [[ "${MANUAL_DEPLOY_TRIGGER}" == "true" ]]; then
               setup_directory 
           fi
 
@@ -74,6 +75,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "Update ${{ env.VERSION_FILE_NAME }}"
+            git commit -m "Update ${VERSION_FILE_NAME}"
             git push
           fi

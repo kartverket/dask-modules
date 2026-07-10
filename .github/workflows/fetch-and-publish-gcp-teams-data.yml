@@ -26,6 +26,9 @@ env:
   SERVICE_ACCOUNT: ${{ inputs.service_account }}
   WORKLOAD_IDENTITY_PROVIDER_OVERRIDE: ${{ inputs.workload_identity_provider_override }}
 
+permissions:
+  contents: read
+
 jobs:
   setup-env:
     runs-on: ubuntu-latest
@@ -44,9 +47,12 @@ jobs:
 
   fetch-teams-from-gcp:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}

@@ -99,11 +99,13 @@ jobs:
     steps:
       # Checkout the repository to the GitHub Actions runner
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - id: google_auth
         name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
@@ -113,9 +115,11 @@ jobs:
       - name: Get Databricks output vars
         id: databricks-output-vars
         run: |
-          echo "DATABRICKS_HOST=${{ env.DATABRICKS_HOST }}" >> $GITHUB_ENV
-          echo "GOOGLE_CREDENTIALS=${{ steps.google_auth.outputs.credentials_file_path }}" >> $GITHUB_ENV
-      - uses: databricks/setup-cli@main
+          echo "DATABRICKS_HOST=${DATABRICKS_HOST}" >> $GITHUB_ENV
+          echo "GOOGLE_CREDENTIALS=${STEPS_GOOGLE_AUTH_OUTPUTS_CREDENTIALS_FILE_PATH}" >> $GITHUB_ENV
+        env:
+          STEPS_GOOGLE_AUTH_OUTPUTS_CREDENTIALS_FILE_PATH: ${{ steps.google_auth.outputs.credentials_file_path }}
+      - uses: databricks/setup-cli@bc7e6aabb6006d8d1758bd25ee1a100935c9cb7c # v1.7.0
         name: Setup databricks CLI
       - name: Set Databricks env variables
         run: |
@@ -154,8 +158,8 @@ jobs:
       - name: Create Databricks Repo if it does not exist
         if: env.REPO_EXISTS == 'false'
         run: |
-          databricks repos create ${{ env.REPO_URL }} gitHub --path ${{ env.DATABRICKS_REPO_PATH }}
+          databricks repos create ${REPO_URL} gitHub --path ${DATABRICKS_REPO_PATH}
       - name: Update Databricks Repo if it exists
         if: env.REPO_EXISTS == 'true'
         run: |
-          databricks repos update ${{ env.DATABRICKS_REPO_PATH }} --branch "${{ env.DATABRICKS_DEPLOY_BRANCH }}"
+          databricks repos update ${DATABRICKS_REPO_PATH} --branch "${DATABRICKS_DEPLOY_BRANCH}"
