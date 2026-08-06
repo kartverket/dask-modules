@@ -47,39 +47,42 @@ jobs:
             changed_files: ${{ steps.changed_contracts.outputs.changed_files }}
         steps:
             - name: Checkout caller repository
+              # zizmor: ignore[artipacked] - credentials are needed by the `git fetch origin main` step below
               uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
               with:
                   fetch-depth: 0
                   ref: ${{ github.ref }}
-                  persist-credentials: false
+                  persist-credentials: true
 
             - name: Get changed contract files
               id: changed_contracts
               run: |
                   git fetch origin main
 
+                  CONTRACT_PATTERN="^${INPUTS_DATA_CONTRACT_PATH}/.*\.(yml|yaml)$"
+
                   if [[ "${INPUTS_LAST_PUBLISHED_REF}" ]]; then
-                    CHANGED_FILES="$(git diff --name-only --diff-filter AMR ${INPUTS_LAST_PUBLISHED_REF}...${GITHUB_REF} | grep '^${INPUTS_DATA_CONTRACT_PATH}/.*\.\(yml\|yaml\)$' || echo '')"
+                    CHANGED_FILES="$(git diff --name-only --diff-filter AMR "${INPUTS_LAST_PUBLISHED_REF}...${GITHUB_REF}" | grep -E "$CONTRACT_PATTERN" || echo '')"
                   elif [[ "${{ github.event_name }}" == 'release' ]]; then
                     PREVIOUS_RELEASE=$(git tag --sort version:refname | tail -n 2 | head -n 1)
                     CURRENT_RELEASE=$(git tag --sort version:refname | tail -n 1 )
                       if [[ "$PREVIOUS_RELEASE" == "$CURRENT_RELEASE" ]]; then
-                        CHANGED_FILES="$(git ls-files | grep '^${INPUTS_DATA_CONTRACT_PATH}/.*\.\(yml\|yaml\)$' || echo '')"
+                        CHANGED_FILES="$(git ls-files | grep -E "$CONTRACT_PATTERN" || echo '')"
                       else
-                        CHANGED_FILES="$(git diff --name-only --diff-filter AMR $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${INPUTS_DATA_CONTRACT_PATH}/.*\.\(yml\|yaml\)$' || echo '')"
+                        CHANGED_FILES="$(git diff --name-only --diff-filter AMR "$PREVIOUS_RELEASE...$CURRENT_RELEASE" | grep -E "$CONTRACT_PATTERN" || echo '')"
                       fi
                   elif [[ "${GITHUB_REF_NAME}" == 'main' ]]; then
-                    CHANGED_FILES="$(git ls-files | grep '^${INPUTS_DATA_CONTRACT_PATH}/.*\.\(yml\|yaml\)$' || echo '')"
+                    CHANGED_FILES="$(git ls-files | grep -E "$CONTRACT_PATTERN" || echo '')"
                   else
-                    CHANGED_FILES="$(git diff --name-only --diff-filter AMR origin/main...HEAD | grep '^${INPUTS_DATA_CONTRACT_PATH}/.*\.\(yml\|yaml\)$' || echo '')"
+                    CHANGED_FILES="$(git diff --name-only --diff-filter AMR origin/main...HEAD | grep -E "$CONTRACT_PATTERN" || echo '')"
                   fi
 
                   CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')"
                   echo "Changed contract files: $CHANGED_FILES_COMMA_SEPARATED"
                   echo "changed_files=$CHANGED_FILES_COMMA_SEPARATED" >> $GITHUB_OUTPUT
               env:
-                INPUTS_LAST_PUBLISHED_REF: ${{ inputs.last_published_ref }}
-                INPUTS_DATA_CONTRACT_PATH: ${{ inputs.data_contract_path }}
+                  INPUTS_LAST_PUBLISHED_REF: ${{ inputs.last_published_ref }}
+                  INPUTS_DATA_CONTRACT_PATH: ${{ inputs.data_contract_path }}
 
     publish-data_contract:
         needs: get-changed-files
@@ -112,8 +115,8 @@ jobs:
                   WORKLOAD_IDENTITY_PROVIDER="projects/${INPUTS_AUTH_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${PRODUCT_NAME}-deploy-pool/providers/github-provider"
                   echo "workload_identity_provider=$WORKLOAD_IDENTITY_PROVIDER" >> $GITHUB_OUTPUT
               env:
-                INPUTS_SERVICE_ACCOUNT_DEPLOY: ${{ inputs.service_account_deploy }}
-                INPUTS_AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
+                  INPUTS_SERVICE_ACCOUNT_DEPLOY: ${{ inputs.service_account_deploy }}
+                  INPUTS_AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
 
             - id: google_auth_compute
               name: Authenticate with Google Cloud
@@ -125,7 +128,7 @@ jobs:
             - name: Setup Python
               uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 #v6.3.0
               with:
-                  python-version: "3.12"
+                  python-version: "3.14"
                   cache: "pip"
 
             - uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
@@ -139,8 +142,8 @@ jobs:
                   pipx install git+https://oauth2:${STEPS_OCTO_STS_OUTPUTS_TOKEN}@github.com/kartverket/kv-datacontracts-validator.git@v1.1.2#subdirectory=datacontract-validator
                   kvdcv --files "${NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES}"
               env:
-                STEPS_OCTO_STS_OUTPUTS_TOKEN: ${{ steps.octo-sts.outputs.token }}
-                NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES: ${{ needs.get-changed-files.outputs.changed_files }}
+                  STEPS_OCTO_STS_OUTPUTS_TOKEN: ${{ steps.octo-sts.outputs.token }}
+                  NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES: ${{ needs.get-changed-files.outputs.changed_files }}
 
             - name: Install dependencies
               run: |
