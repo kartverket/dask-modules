@@ -78,8 +78,8 @@ jobs:
                   echo "Changed contract files: $CHANGED_FILES_COMMA_SEPARATED"
                   echo "changed_files=$CHANGED_FILES_COMMA_SEPARATED" >> $GITHUB_OUTPUT
               env:
-                INPUTS_LAST_PUBLISHED_REF: ${{ inputs.last_published_ref }}
-                INPUTS_DATA_CONTRACT_PATH: ${{ inputs.data_contract_path }}
+                  INPUTS_LAST_PUBLISHED_REF: ${{ inputs.last_published_ref }}
+                  INPUTS_DATA_CONTRACT_PATH: ${{ inputs.data_contract_path }}
 
     publish-data_contract:
         needs: get-changed-files
@@ -112,8 +112,8 @@ jobs:
                   WORKLOAD_IDENTITY_PROVIDER="projects/${INPUTS_AUTH_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${PRODUCT_NAME}-deploy-pool/providers/github-provider"
                   echo "workload_identity_provider=$WORKLOAD_IDENTITY_PROVIDER" >> $GITHUB_OUTPUT
               env:
-                INPUTS_SERVICE_ACCOUNT_DEPLOY: ${{ inputs.service_account_deploy }}
-                INPUTS_AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
+                  INPUTS_SERVICE_ACCOUNT_DEPLOY: ${{ inputs.service_account_deploy }}
+                  INPUTS_AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
 
             - id: google_auth_compute
               name: Authenticate with Google Cloud
@@ -125,7 +125,7 @@ jobs:
             - name: Setup Python
               uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 #v6.3.0
               with:
-                  python-version: "3.12"
+                  python-version: "3.14"
                   cache: "pip"
 
             - uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
@@ -139,8 +139,8 @@ jobs:
                   pipx install git+https://oauth2:${STEPS_OCTO_STS_OUTPUTS_TOKEN}@github.com/kartverket/kv-datacontracts-validator.git@v1.1.2#subdirectory=datacontract-validator
                   kvdcv --files "${NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES}"
               env:
-                STEPS_OCTO_STS_OUTPUTS_TOKEN: ${{ steps.octo-sts.outputs.token }}
-                NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES: ${{ needs.get-changed-files.outputs.changed_files }}
+                  STEPS_OCTO_STS_OUTPUTS_TOKEN: ${{ steps.octo-sts.outputs.token }}
+                  NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES: ${{ needs.get-changed-files.outputs.changed_files }}
 
             - name: Install dependencies
               run: |
