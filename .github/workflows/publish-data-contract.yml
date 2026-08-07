@@ -47,31 +47,34 @@ jobs:
             changed_files: ${{ steps.changed_contracts.outputs.changed_files }}
         steps:
             - name: Checkout caller repository
-              uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+              # zizmor: ignore[artipacked] - credentials are needed by the `git fetch origin main` step below
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
                   ref: ${{ github.ref }}
-                  persist-credentials: false
+                  persist-credentials: true
 
             - name: Get changed contract files
               id: changed_contracts
               run: |
                   git fetch origin main
 
+                  CONTRACT_PATTERN="^${INPUTS_DATA_CONTRACT_PATH}/.*\.(yml|yaml)$"
+
                   if [[ "${INPUTS_LAST_PUBLISHED_REF}" ]]; then
-                    CHANGED_FILES="$(git diff --name-only --diff-filter AMR ${INPUTS_LAST_PUBLISHED_REF}...${GITHUB_REF} | grep '^${INPUTS_DATA_CONTRACT_PATH}/.*\.\(yml\|yaml\)$' || echo '')"
+                    CHANGED_FILES="$(git diff --name-only --diff-filter AMR "${INPUTS_LAST_PUBLISHED_REF}...${GITHUB_REF}" | grep -E "$CONTRACT_PATTERN" || echo '')"
                   elif [[ "${{ github.event_name }}" == 'release' ]]; then
                     PREVIOUS_RELEASE=$(git tag --sort version:refname | tail -n 2 | head -n 1)
                     CURRENT_RELEASE=$(git tag --sort version:refname | tail -n 1 )
                       if [[ "$PREVIOUS_RELEASE" == "$CURRENT_RELEASE" ]]; then
-                        CHANGED_FILES="$(git ls-files | grep '^${INPUTS_DATA_CONTRACT_PATH}/.*\.\(yml\|yaml\)$' || echo '')"
+                        CHANGED_FILES="$(git ls-files | grep -E "$CONTRACT_PATTERN" || echo '')"
                       else
-                        CHANGED_FILES="$(git diff --name-only --diff-filter AMR $PREVIOUS_RELEASE...$CURRENT_RELEASE | grep '^${INPUTS_DATA_CONTRACT_PATH}/.*\.\(yml\|yaml\)$' || echo '')"
+                        CHANGED_FILES="$(git diff --name-only --diff-filter AMR "$PREVIOUS_RELEASE...$CURRENT_RELEASE" | grep -E "$CONTRACT_PATTERN" || echo '')"
                       fi
                   elif [[ "${GITHUB_REF_NAME}" == 'main' ]]; then
-                    CHANGED_FILES="$(git ls-files | grep '^${INPUTS_DATA_CONTRACT_PATH}/.*\.\(yml\|yaml\)$' || echo '')"
+                    CHANGED_FILES="$(git ls-files | grep -E "$CONTRACT_PATTERN" || echo '')"
                   else
-                    CHANGED_FILES="$(git diff --name-only --diff-filter AMR origin/main...HEAD | grep '^${INPUTS_DATA_CONTRACT_PATH}/.*\.\(yml\|yaml\)$' || echo '')"
+                    CHANGED_FILES="$(git diff --name-only --diff-filter AMR origin/main...HEAD | grep -E "$CONTRACT_PATTERN" || echo '')"
                   fi
 
                   CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')"
@@ -89,14 +92,14 @@ jobs:
             COLUMNS: 200
         steps:
             - name: Checkout caller repository
-              uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
                   ref: ${{ github.ref }}
                   persist-credentials: false
 
             - name: Checkout dask-modules
-              uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
                   repository: kartverket/dask-modules
