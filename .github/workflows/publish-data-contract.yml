@@ -57,6 +57,7 @@ jobs:
             - name: Get changed contract files
               id: changed_contracts
               run: |
+                  git config core.quotepath false
                   git fetch origin main
 
                   CONTRACT_PATTERN="^${INPUTS_DATA_CONTRACT_PATH}/.*\.(yml|yaml)$"
