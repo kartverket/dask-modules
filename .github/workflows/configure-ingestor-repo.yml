@@ -62,7 +62,7 @@ jobs:
           script: |
             const repoName = process.env.TARGET_REPO;
             const teamSlug = 'dask';
-            const response = await github.request('PUT /orgs/{org}/teams/{team_slug}/repos/{owner}/{repo}', {
+            const response_dask = await github.request('PUT /orgs/{org}/teams/{team_slug}/repos/{owner}/{repo}', {
               org: 'kartverket',
               team_slug: teamSlug,
               owner: 'kartverket',
