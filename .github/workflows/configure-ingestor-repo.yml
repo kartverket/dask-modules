@@ -62,21 +62,27 @@ jobs:
           script: |
             const repoName = process.env.TARGET_REPO;
             const teamSlug = 'dask';
-            const response_dask = await github.rest.teams.addOrUpdateRepoPermissionsInOrg({
+            const response_dask = await github.request('PUT /orgs/{org}/teams/{team_slug}/repos/{owner}/{repo}', {
               org: 'kartverket',
               team_slug: teamSlug,
               owner: 'kartverket',
               repo: repoName,
-              permission: 'admin'
+              permission: 'admin',
+              headers: {
+                'X-GitHub-Api-Version': '2026-03-10'
+              }
             });
             console.log(`Added DASK team to ${repoName}:`, response_dask.status);
 
-            const response_team = await github.rest.teams.addOrUpdateRepoPermissionsInOrg({
+            const response_team = await github.request('PUT /orgs/{org}/teams/{team_slug}/repos/{owner}/{repo}', {
               org: 'kartverket',
               team_slug: process.env.GITHUB_TEAM,
               owner: 'kartverket',
               repo: repoName,
-              permission: 'admin'
+              permission: 'admin',
+              headers: {
+                'X-GitHub-Api-Version': '2026-03-10'
+              }
             });
             console.log(`Added ${process.env.GITHUB_TEAM} to ${repoName}:`, response_team.status);
 
