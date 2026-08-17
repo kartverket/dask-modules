@@ -55,7 +55,7 @@ jobs:
       - name: Modify files
         working-directory: target-repo
         run: |
-          python ../dask-modules/scripts/data_ingestor_update.py --payload '${INPUTS_PAYLOAD}'
+          python ../dask-modules/scripts/data_ingestor_update.py --payload "${INPUTS_PAYLOAD}"
         env:
           INPUTS_PAYLOAD: ${{ inputs.payload }}
 
@@ -124,6 +124,6 @@ jobs:
         env:
           PUBSUB_TOPIC: projects/onboarding-bf12/topics/onboarding-prod
         run: |
-          json_message='{"commit_hash": "${{ github.sha }}", "event_type": "ingestor-configured", "payload": { "resource_name": "${RESOURCE_NAME}" }}'
+          json_message="{\"commit_hash\": \"${{ github.sha }}\", \"event_type\": \"ingestor-configured\", \"payload\": { \"resource_name\": \"${RESOURCE_NAME}\" }}"
 
           gcloud pubsub topics publish ${{ env.PUBSUB_TOPIC }} --message="$json_message"
