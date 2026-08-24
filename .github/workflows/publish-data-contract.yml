@@ -183,21 +183,22 @@ jobs:
               run: |
                   IFS=',' read -ra FILES <<< "$CHANGED_DATA_CONTRACTS"
                   for file in "${FILES[@]}"; do
-                      if [[ -z "$file" ]]; then
-                          continue
-                      fi
-                      JSON_CONTENT=$(yq -o json "$file")
-                      if [[ -z "$JSON_CONTENT" ]]; then
-                          echo "Skipping $file: no JSON content"
-                          continue
-                      fi
-                      echo "Publishing $file"
+                      [[ -z "$file" ]] && continue
+
                       if [[ "${INPUTS_ENVIRONMENT}" == "prod" ]]; then
                           TOPIC="projects/dataplattform-prod-9b1d/topics/data-contract-topic"
                       else
                           TOPIC="projects/dataplattform-dev-d335/topics/data-contract-topic"
                       fi
-                      gcloud pubsub topics publish "$TOPIC" --message "$JSON_CONTENT"
+
+                      echo "Publishing $file"
+                      printf '{"messages":[{"data":"%s"}]}' "$(yq -o json '.' "$file" | base64 -w0)" > ./pubsub_body.json
+
+                      curl -X POST \
+                      "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
+                      -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+                      -H "Content-Type: application/json" \
+                      -d @pubsub_body.json
                   done
               env:
                   CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
