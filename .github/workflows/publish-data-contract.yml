@@ -191,13 +191,19 @@ jobs:
                           echo "Skipping $file: no JSON content"
                           continue
                       fi
+                      echo "$JSON_CONTENT" > payload.json
                       echo "Publishing $file"
                       if [[ "${INPUTS_ENVIRONMENT}" == "prod" ]]; then
                           TOPIC="projects/dataplattform-prod-9b1d/topics/data-contract-topic"
                       else
                           TOPIC="projects/dataplattform-dev-d335/topics/data-contract-topic"
                       fi
-                      gcloud pubsub topics publish "$TOPIC" --message "$JSON_CONTENT"
+
+                      curl -X POST \
+                        "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
+                        -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+                        -H "Content-Type: application/json" \
+                        -d @payload.json
                   done
               env:
                   CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
