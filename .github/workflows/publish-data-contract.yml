@@ -197,7 +197,11 @@ jobs:
                       else
                           TOPIC="projects/dataplattform-dev-d335/topics/data-contract-topic"
                       fi
-                      gcloud pubsub topics publish "$TOPIC" --message "$JSON_CONTENT"
+
+                      echo "Env size: $(env | wc -c) bytes"
+                      echo "File size (base64): $(echo "$JSON_CONTENT" | base64 | wc -c) bytes"
+
+                      # gcloud pubsub topics publish "$TOPIC" --message "$JSON_CONTENT"
                   done
               env:
                   CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
