@@ -31,14 +31,19 @@ on:
                 required: true
                 type: boolean
                 default: false
-            last_published_ref:
-                description: "The git ref (branch, tag or commit id) used to find the last published data contract. Used to find changed data contract files. Example: main"
-                required: false
-                type: string
+            republish_all:
+                description: "Whether to republish all data contracts regardless of changes."
+                required: true
+                type: boolean
+                default: false
 
 permissions:
     id-token: write # Required for Octo STS
     contents: read
+    variables: write
+
+env:
+    LAST_PUBLISHED_SHA_VAR: DATA_CONTRACTS_LAST_PUBLISHED_SHA
 
 jobs:
     get-changed-files:
@@ -62,28 +67,24 @@ jobs:
 
                   CONTRACT_PATTERN="^${INPUTS_DATA_CONTRACT_PATH}/.*\.(yml|yaml)$"
 
-                  if [[ "${INPUTS_LAST_PUBLISHED_REF}" ]]; then
-                    CHANGED_FILES="$(git diff --name-only --diff-filter AMR "${INPUTS_LAST_PUBLISHED_REF}...${GITHUB_REF}" | grep -E "$CONTRACT_PATTERN" || echo '')"
-                  elif [[ "${{ github.event_name }}" == 'release' ]]; then
-                    PREVIOUS_RELEASE=$(git tag --sort version:refname | tail -n 2 | head -n 1)
-                    CURRENT_RELEASE=$(git tag --sort version:refname | tail -n 1 )
-                      if [[ "$PREVIOUS_RELEASE" == "$CURRENT_RELEASE" ]]; then
-                        CHANGED_FILES="$(git ls-files | grep -E "$CONTRACT_PATTERN" || echo '')"
-                      else
-                        CHANGED_FILES="$(git diff --name-only --diff-filter AMR "$PREVIOUS_RELEASE...$CURRENT_RELEASE" | grep -E "$CONTRACT_PATTERN" || echo '')"
-                      fi
-                  elif [[ "${GITHUB_REF_NAME}" == 'main' ]]; then
+                  SAVED_SHA="$(curl -sf \
+                      "https://api.github.com/repos/${GITHUB_REPOSITORY}/environments/${INPUTS_ENVIRONMENT}/variables/${LAST_PUBLISHED_SHA_VAR}" \
+                      -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq -r '.value // ""' || echo '')"
+                  if [[ "${INPUTS_REPUBLISH_ALL}" == "true" ]]; then
                     CHANGED_FILES="$(git ls-files | grep -E "$CONTRACT_PATTERN" || echo '')"
+                  elif [[ "${SAVED_SHA}" ]]; then
+                    CHANGED_FILES="$(git diff --name-only --diff-filter AMR "${SAVED_SHA}...${GITHUB_REF}" | grep -E "$CONTRACT_PATTERN" || echo '')"
                   else
-                    CHANGED_FILES="$(git diff --name-only --diff-filter AMR origin/main...HEAD | grep -E "$CONTRACT_PATTERN" || echo '')"
+                    CHANGED_FILES="$(git ls-files | grep -E "$CONTRACT_PATTERN" || echo '')"
                   fi
 
                   CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')"
                   echo "Changed contract files: $CHANGED_FILES_COMMA_SEPARATED"
                   echo "changed_files=$CHANGED_FILES_COMMA_SEPARATED" >> $GITHUB_OUTPUT
               env:
-                  INPUTS_LAST_PUBLISHED_REF: ${{ inputs.last_published_ref }}
                   INPUTS_DATA_CONTRACT_PATH: ${{ inputs.data_contract_path }}
+                  INPUTS_ENVIRONMENT: ${{ inputs.environment }}
+                  GITHUB_TOKEN: ${{ github.token }}
 
     publish-data_contract:
         needs: get-changed-files
@@ -203,3 +204,28 @@ jobs:
               env:
                   CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
                   INPUTS_ENVIRONMENT: ${{ inputs.environment }}
+
+            - name: Save last published SHA to GitHub environment variable
+              if: inputs.publish_data_contract
+              run: |
+                  VARIABLE_NAME="${LAST_PUBLISHED_SHA_VAR}"
+                  API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/environments/${INPUTS_ENVIRONMENT}/variables/${VARIABLE_NAME}"
+
+                  # PATCH returns 204 if exists, 404 if not — fall back to POST
+                  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X PATCH "$API_URL" \
+                      -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                      -H "Content-Type: application/json" \
+                      -d "{\"name\":\"${VARIABLE_NAME}\",\"value\":\"${GITHUB_SHA}\"}")
+
+                  if [[ "$HTTP_STATUS" == "404" ]]; then
+                      curl -s -X POST \
+                          "https://api.github.com/repos/${GITHUB_REPOSITORY}/environments/${INPUTS_ENVIRONMENT}/variables" \
+                          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                          -H "Content-Type: application/json" \
+                          -d "{\"name\":\"${VARIABLE_NAME}\",\"value\":\"${GITHUB_SHA}\"}"
+                  fi
+
+                  echo "Saved last published SHA: ${GITHUB_SHA}"
+              env:
+                  INPUTS_ENVIRONMENT: ${{ inputs.environment }}
+                  GITHUB_TOKEN: ${{ github.token }}
