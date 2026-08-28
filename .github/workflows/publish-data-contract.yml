@@ -91,7 +91,7 @@ jobs:
         runs-on: ubuntu-latest
         env:
             COLUMNS: 200
-            TOPIC: ${{ inputs.environment == 'prod' && 'projects/dataplattform-prod-9b1d/topics/data-contract-topic' || 'projects/dataplattform-dev-d335/topics/data-contract-topic' }}
+            TOPIC: ${{ inputs.environment == 'prod' && 'projects/dataplattform-prod-9b1d/topics/data-contract-topic' || 'projects/dataplattform-dev-d335/topics/data-contract-topic-test' }}
         steps:
             - name: Checkout caller repository
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -191,11 +191,11 @@ jobs:
                       echo "Pub/Sub body: $(cat ./pubsub_body.json)"
                       echo "Publishing to Pub/Sub topic: $TOPIC"
 
-                    #   curl -X POST \
-                    #   "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
-                    #   -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-                    #   -H "Content-Type: application/json" \
-                    #   -d @pubsub_body.json
+                      curl -X POST \
+                        "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
+                        -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+                        -H "Content-Type: application/json" \
+                        -d @pubsub_body.json
                   done
               env:
                   CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
@@ -212,11 +212,11 @@ jobs:
                   printf '{"messages":[{"data":"%s", "attributes":{"message_type": "active_contract_ids"}}]}' "$(echo "$MANIFEST" | base64 -w0)" > ./pubsub_body.json
                   echo "Publishing manifest to Pub/Sub topic: $TOPIC"
                   echo "Pub/Sub body: $(cat ./pubsub_body.json)"
-              #   curl -X POST \
-              #     "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
-              #     -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-              #     -H "Content-Type: application/json" \
-              #     -d @pubsub_body.json
+                  curl -X POST \
+                    "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
+                    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+                    -H "Content-Type: application/json" \
+                    -d @pubsub_body.json
               env:
                   INPUTS_ENVIRONMENT: ${{ inputs.environment }}
                   INPUTS_DATA_CONTRACT_PATH: ${{ inputs.data_contract_path }}
