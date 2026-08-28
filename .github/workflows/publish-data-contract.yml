@@ -211,7 +211,7 @@ jobs:
                   ALL_IDS=$(git ls-files "${INPUTS_DATA_CONTRACT_PATH}" | grep -E "\.(yml|yaml)$" | xargs -I{} yq '.id' {} | jq -Rs '[split("\n")[] | select(length > 0)]')
                   echo "Collected all active data contract IDs: $ALL_IDS"
 
-                  jq -n --arg repo "$GITHUB_REPOSITORY" --argjson ids "$ALL_IDS" '{"repository": $repo, "activeIds": $ids}' \
+                  jq -n --arg repo "$GITHUB_REPOSITORY" --argjson ids "$ALL_IDS" '{"repository": $repo, "data_contract_ids": $ids}' \
                     | base64 -w0 \
                     | jq -Rs '{"messages":[{"data": ., "attributes":{"message_type": "active_data_contract_ids"}}]}' \
                     > ./pubsub_body.json
