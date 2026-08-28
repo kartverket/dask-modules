@@ -187,7 +187,11 @@ jobs:
                       [[ -z "$file" ]] && continue
 
                       echo "Publishing $file"
-                      printf '{"messages":[{"data": {"repository": "$GITHUB_REPOSITORY", "data_contract": "%s"}, "attributes":{"message_type": "data_contract"}}]}' "$(yq -o json '.' "$file" | base64 -w0)" > ./pubsub_body.json
+                      yq -o json '.' "$file" \
+                        | jq --arg repo "$GITHUB_REPOSITORY" '{"repository": $repo, "data_contract": .}' \
+                        | base64 -w0 \
+                        | jq -Rs '{"messages":[{"data": ., "attributes":{"message_type": "data_contract"}}]}' \
+                        > ./pubsub_body.json
                       echo "Pub/Sub body: $(cat ./pubsub_body.json)"
                       echo "Publishing to Pub/Sub topic: $TOPIC"
 
@@ -206,10 +210,12 @@ jobs:
               run: |
                   ALL_IDS=$(git ls-files "${INPUTS_DATA_CONTRACT_PATH}" | grep -E "\.(yml|yaml)$" | xargs -I{} yq '.id' {} | jq -Rs '[split("\n")[] | select(length > 0)]')
                   echo "Collected all active data contract IDs: $ALL_IDS"
-                  MANIFEST="{\"repository\": \"$GITHUB_REPOSITORY\", \"activeIds\": $ALL_IDS}"
-                  echo "Constructed manifest: $MANIFEST"
 
-                  printf '{"messages":[{"data":"%s", "attributes":{"message_type": "active_contract_ids"}}]}' "$(echo "$MANIFEST" | base64 -w0)" > ./pubsub_body.json
+                  jq -n --arg repo "$GITHUB_REPOSITORY" --argjson ids "$ALL_IDS" '{"repository": $repo, "activeIds": $ids}' \
+                    | base64 -w0 \
+                    | jq -Rs '{"messages":[{"data": ., "attributes":{"message_type": "active_data_contract_ids"}}]}' \
+                    > ./pubsub_body.json
+                    
                   echo "Publishing manifest to Pub/Sub topic: $TOPIC"
                   echo "Pub/Sub body: $(cat ./pubsub_body.json)"
                   curl -X POST \
