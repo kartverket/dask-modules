@@ -91,7 +91,7 @@ jobs:
         runs-on: ubuntu-latest
         env:
             COLUMNS: 200
-            TOPIC: ${{ inputs.environment == 'prod' && 'projects/dataplattform-prod-9b1d/topics/data-contract-topic' || 'projects/dataplattform-dev-d335/topics/data-contract-topic' }}
+            TOPIC: ${{ inputs.environment == 'prod' && 'projects/dataplattform-prod-9b1d/topics/data-contract-topic' || 'projects/dataplattform-dev-d335/topics/data-contract-topic-test' }}
         steps:
             - name: Checkout caller repository
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
