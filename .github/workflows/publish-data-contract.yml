@@ -209,11 +209,11 @@ jobs:
               if: inputs.publish_data_contract
               run: |
                   ALL_IDS=$(git ls-files "${INPUTS_DATA_CONTRACT_PATH}" | grep -E "\.(yml|yaml)$" | xargs -I{} yq '.id' {} | jq -Rs '[split("\n")[] | select(length > 0)]')
-                  echo "Collected all active data contract IDs: $ALL_IDS"
+                  echo "Collected all existing data contract IDs: $ALL_IDS"
 
                   jq -n --arg repo "$GITHUB_REPOSITORY" --argjson ids "$ALL_IDS" '{"repository": $repo, "data_contract_ids": $ids}' \
                     | base64 -w0 \
-                    | jq -Rs '{"messages":[{"data": ., "attributes":{"message_type": "active_data_contract_ids"}}]}' \
+                    | jq -Rs '{"messages":[{"data": ., "attributes":{"message_type": "existing_data_contract_ids"}}]}' \
                     > ./pubsub_body.json
 
                   echo "Publishing manifest to Pub/Sub topic: $TOPIC"
