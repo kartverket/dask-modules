@@ -220,11 +220,17 @@ jobs:
                   jq . ./pubsub_body.json
                   echo "::endgroup::"
 
-                  curl -sS --fail-with-body -X POST \
-                      "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
-                      -H "Authorization: Bearer $TOKEN" \
-                      -H "Content-Type: application/json" \
-                      -d @pubsub_body.json
+                  curl -sS --fail-with-body \
+                    --retry 5 \
+                    --retry-delay 2 \
+                    --retry-all-errors \
+                    --retry-max-time 60 \
+                    --connect-timeout 10 \ 
+                    -X POST \
+                    "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
+                    -H "Authorization: Bearer $TOKEN" \
+                    -H "Content-Type: application/json" \
+                    -d @pubsub_body.json
               env:
                   CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
                   INPUTS_DATA_CONTRACT_PATH: ${{ inputs.data_contract_path }}
