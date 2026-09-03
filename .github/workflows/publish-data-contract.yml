@@ -191,17 +191,19 @@ jobs:
                           >> ./messages.jsonl
                   done
 
-                  # Append the manifest message with all existing contract IDs.
-                  ALL_IDS=$(git ls-files "$INPUTS_DATA_CONTRACT_PATH" \
-                      | grep -E "\.(yml|yaml)$" \
-                      | xargs -I{} yq '.id' {} \
-                      | jq -Rs '[split("\n")[] | select(length > 0)]')
-                  echo "Collected all existing data contract IDs: $ALL_IDS"
+                  # Append the manifest message with all existing contract IDs and versions.
+                  ALL_CONTRACTS='[]'
+                  while IFS= read -r file; do
+                      [[ -z "$file" ]] && continue
+                      entry=$(yq -o json '{"id": .id, "version": .version}' "$file")
+                      ALL_CONTRACTS=$(jq -c --argjson e "$entry" '. + [$e]' <<< "$ALL_CONTRACTS")
+                  done < <(git ls-files "$INPUTS_DATA_CONTRACT_PATH" | grep -E "\.(yml|yaml)$")
+                  echo "Collected all existing data contracts: $ALL_CONTRACTS"
 
-                  jq -cn --arg repo "$GITHUB_REPOSITORY" --argjson ids "$ALL_IDS" \
-                      '{repository: $repo, data_contract_ids: $ids}' \
+                  jq -cn --arg repo "$GITHUB_REPOSITORY" --argjson contracts "$ALL_CONTRACTS" \
+                      '{repository: $repo, data_contracts: $contracts}' \
                       | base64 -w0 \
-                      | jq -Rc '{data: ., attributes: {message_type: "existing_data_contract_ids"}}' \
+                      | jq -Rc '{data: ., attributes: {message_type: "existing_data_contracts"}}' \
                       >> ./messages.jsonl
 
                   # Wrap all messages into a single Pub/Sub publish request body.
