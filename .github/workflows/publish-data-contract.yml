@@ -179,57 +179,52 @@ jobs:
                   wget https://github.com/mikefarah/yq/releases/download/v4.43.1/yq_linux_amd64 -O /usr/local/bin/yq
                   chmod +x /usr/local/bin/yq
 
-            - name: Get and mask access token
+            - name: Publish data contracts to Pub/Sub
               if: inputs.publish_data_contract
               run: |
                   TOKEN="$(gcloud auth print-access-token)"
                   echo "::add-mask::$TOKEN"
-                  echo "TOKEN=$TOKEN" >> "$GITHUB_ENV"
 
-            - name: Publish changed contracts as JSON to Pub/Sub
-              if: inputs.publish_data_contract
-              run: |
+                  # Build one message per changed contract file.
+                  : > ./messages.jsonl
                   IFS=',' read -ra FILES <<< "$CHANGED_DATA_CONTRACTS"
                   for file in "${FILES[@]}"; do
                       [[ -z "$file" ]] && continue
-
-                      echo "Publishing $file"
+                      echo "Adding $file"
                       yq -o json '.' "$file" \
-                        | jq --arg repo "$GITHUB_REPOSITORY" '{"repository": $repo, "data_contract": .}' \
-                        | base64 -w0 \
-                        | jq -Rs '{"messages":[{"data": ., "attributes":{"message_type": "data_contract"}}]}' \
-                        > ./pubsub_body.json
-                      echo "Pub/Sub body: $(cat ./pubsub_body.json)"
-                      echo "Publishing to Pub/Sub topic: $TOPIC"
-
-                      curl -X POST \
-                        "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
-                        -H "Authorization: Bearer $TOKEN" \
-                        -H "Content-Type: application/json" \
-                        -d @pubsub_body.json
+                          | jq -c --arg repo "$GITHUB_REPOSITORY" \
+                              '{repository: $repo, data_contract: .}' \
+                          | base64 -w0 \
+                          | jq -Rc '{data: ., attributes: {message_type: "data_contract"}}' \
+                          >> ./messages.jsonl
                   done
-              env:
-                  CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
-                  INPUTS_ENVIRONMENT: ${{ inputs.environment }}
 
-            - name: Publish existing data contract ids
-              if: inputs.publish_data_contract
-              run: |
-                  ALL_IDS=$(git ls-files "${INPUTS_DATA_CONTRACT_PATH}" | grep -E "\.(yml|yaml)$" | xargs -I{} yq '.id' {} | jq -Rs '[split("\n")[] | select(length > 0)]')
+                  # Append the manifest message with all existing contract IDs.
+                  ALL_IDS=$(git ls-files "$INPUTS_DATA_CONTRACT_PATH" \
+                      | grep -E "\.(yml|yaml)$" \
+                      | xargs -I{} yq '.id' {} \
+                      | jq -Rs '[split("\n")[] | select(length > 0)]')
                   echo "Collected all existing data contract IDs: $ALL_IDS"
 
-                  jq -n --arg repo "$GITHUB_REPOSITORY" --argjson ids "$ALL_IDS" '{"repository": $repo, "data_contract_ids": $ids}' \
-                    | base64 -w0 \
-                    | jq -Rs '{"messages":[{"data": ., "attributes":{"message_type": "existing_data_contract_ids"}}]}' \
-                    > ./pubsub_body.json
+                  jq -cn --arg repo "$GITHUB_REPOSITORY" --argjson ids "$ALL_IDS" \
+                      '{repository: $repo, data_contract_ids: $ids}' \
+                      | base64 -w0 \
+                      | jq -Rc '{data: ., attributes: {message_type: "existing_data_contract_ids"}}' \
+                      >> ./messages.jsonl
 
-                  echo "Publishing manifest to Pub/Sub topic: $TOPIC"
-                  echo "Pub/Sub body: $(cat ./pubsub_body.json)"
-                  curl -X POST \
-                    "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
-                    -H "Authorization: Bearer $TOKEN" \
-                    -H "Content-Type: application/json" \
-                    -d @pubsub_body.json
+                  # Wrap all messages into a single Pub/Sub publish request body.
+                  jq -s '{messages: .}' ./messages.jsonl > ./pubsub_body.json
+
+                  echo "Publishing $(jq '.messages | length' ./pubsub_body.json) messages to $TOPIC"
+                  echo "::group::Pub/Sub request body"
+                  jq . ./pubsub_body.json
+                  echo "::endgroup::"
+
+                  curl -sS --fail-with-body -X POST \
+                      "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
+                      -H "Authorization: Bearer $TOKEN" \
+                      -H "Content-Type: application/json" \
+                      -d @pubsub_body.json
               env:
-                  INPUTS_ENVIRONMENT: ${{ inputs.environment }}
+                  CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
                   INPUTS_DATA_CONTRACT_PATH: ${{ inputs.data_contract_path }}
