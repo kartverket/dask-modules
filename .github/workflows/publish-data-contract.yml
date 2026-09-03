@@ -91,7 +91,7 @@ jobs:
         runs-on: ubuntu-latest
         env:
             COLUMNS: 200
-            TOPIC: ${{ inputs.environment == 'prod' && 'projects/dataplattform-prod-9b1d/topics/data-contract-topic' || 'projects/dataplattform-dev-d335/topics/data-contract-topic-test' }}
+            TOPIC: ${{ inputs.environment == 'prod' && 'projects/dataplattform-prod-9b1d/topics/data-contract-topic' || 'projects/dataplattform-dev-d335/topics/data-contract-topic' }}
         steps:
             - name: Checkout caller repository
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -127,37 +127,37 @@ jobs:
                   workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
                   service_account: ${{ inputs.service_account_compute}}
 
-            # - name: Setup Python
-            #   uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 #v6.3.0
-            #   with:
-            #       python-version: "3.14"
-            #       cache: "pip"
+            - name: Setup Python
+              uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 #v6.3.0
+              with:
+                  python-version: "3.14"
+                  cache: "pip"
 
-            # - uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
-            #   id: octo-sts
-            #   with:
-            #       scope: kartverket/kv-datacontracts-validator
-            #       identity: kartverket_repos
+            - uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
+              id: octo-sts
+              with:
+                  scope: kartverket/kv-datacontracts-validator
+                  identity: kartverket_repos
 
-            # - name: Validate each changed contract file using kv-datacontract-validator
-            #   run: |
-            #       pipx install git+https://oauth2:${STEPS_OCTO_STS_OUTPUTS_TOKEN}@github.com/kartverket/kv-datacontracts-validator.git@v1.2.1#subdirectory=datacontract-validator
-            #       kvdcv --files "${NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES}"
-            #   env:
-            #       STEPS_OCTO_STS_OUTPUTS_TOKEN: ${{ steps.octo-sts.outputs.token }}
-            #       NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES: ${{ needs.get-changed-files.outputs.changed_files }}
+            - name: Validate each changed contract file using kv-datacontract-validator
+              run: |
+                  pipx install git+https://oauth2:${STEPS_OCTO_STS_OUTPUTS_TOKEN}@github.com/kartverket/kv-datacontracts-validator.git@v1.2.1#subdirectory=datacontract-validator
+                  kvdcv --files "${NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES}"
+              env:
+                  STEPS_OCTO_STS_OUTPUTS_TOKEN: ${{ steps.octo-sts.outputs.token }}
+                  NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES: ${{ needs.get-changed-files.outputs.changed_files }}
 
-            # - name: Install dependencies
-            #   run: |
-            #       pip install -r dask-modules/scripts/validate_data_contract/requirements.txt
+            - name: Install dependencies
+              run: |
+                  pip install -r dask-modules/scripts/validate_data_contract/requirements.txt
 
-            # - name: Validate data contracts
-            #   run: |
-            #       python dask-modules/scripts/validate_data_contract/validate_data_contract.py
-            #   env:
-            #       ENVIRONMENT: ${{ inputs.environment }}
-            #       SERVICE_ACCOUNT: ${{ inputs.service_account_compute }}
-            #       CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
+            - name: Validate data contracts
+              run: |
+                  python dask-modules/scripts/validate_data_contract/validate_data_contract.py
+              env:
+                  ENVIRONMENT: ${{ inputs.environment }}
+                  SERVICE_ACCOUNT: ${{ inputs.service_account_compute }}
+                  CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
 
             - id: google_auth_deploy
               name: Authenticate with Google Cloud
