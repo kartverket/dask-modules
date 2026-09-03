@@ -91,7 +91,7 @@ jobs:
         runs-on: ubuntu-latest
         env:
             COLUMNS: 200
-            TOPIC: ${{ inputs.environment == 'prod' && 'projects/dataplattform-prod-9b1d/topics/data-contract-topic' || 'projects/dataplattform-dev-d335/topics/data-contract-topic' }}
+            TOPIC: ${{ inputs.environment == 'prod' && 'projects/dataplattform-prod-9b1d/topics/data-contract-topic' || 'projects/dataplattform-dev-d335/topics/data-contract-topic-test' }}
         steps:
             - name: Checkout caller repository
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -191,7 +191,7 @@ jobs:
                           >> ./messages.jsonl
                   done
 
-                  # Append the manifest message with all existing contract IDs and versions.
+                  # Append the index message with all existing contract IDs and versions.
                   ALL_CONTRACTS='[]'
                   while IFS= read -r file; do
                       [[ -z "$file" ]] && continue
@@ -201,9 +201,9 @@ jobs:
                   echo "Collected all existing data contracts: $ALL_CONTRACTS"
 
                   jq -cn --arg repo "$GITHUB_REPOSITORY" --argjson contracts "$ALL_CONTRACTS" \
-                      '{repository: $repo, data_contracts: $contracts}' \
+                      '{repository: $repo, data_contract_index: $contracts}' \
                       | base64 -w0 \
-                      | jq -Rc '{data: ., attributes: {message_type: "existing_data_contracts"}}' \
+                      | jq -Rc '{data: ., attributes: {message_type: "data_contract_index"}}' \
                       >> ./messages.jsonl
 
                   # Wrap all messages into a single Pub/Sub publish request body.
