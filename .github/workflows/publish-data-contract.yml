@@ -179,6 +179,13 @@ jobs:
                   wget https://github.com/mikefarah/yq/releases/download/v4.43.1/yq_linux_amd64 -O /usr/local/bin/yq
                   chmod +x /usr/local/bin/yq
 
+            - name: Get and mask access token
+              if: inputs.publish_data_contract
+              run: |
+                  TOKEN="$(gcloud auth print-access-token)"
+                  echo "::add-mask::$TOKEN"
+                  echo "TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
             - name: Publish changed contracts as JSON to Pub/Sub
               if: inputs.publish_data_contract
               run: |
@@ -197,7 +204,7 @@ jobs:
 
                       curl -X POST \
                         "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
-                        -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+                        -H "Authorization: Bearer $TOKEN" \
                         -H "Content-Type: application/json" \
                         -d @pubsub_body.json
                   done
@@ -220,7 +227,7 @@ jobs:
                   echo "Pub/Sub body: $(cat ./pubsub_body.json)"
                   curl -X POST \
                     "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
-                    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+                    -H "Authorization: Bearer $TOKEN" \
                     -H "Content-Type: application/json" \
                     -d @pubsub_body.json
               env:
