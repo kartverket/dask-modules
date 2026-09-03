@@ -166,12 +166,7 @@ jobs:
               with:
                   workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
                   service_account: ${{ inputs.service_account_deploy}}
-
-            - name: "Set up Cloud SDK"
-              if: inputs.publish_data_contract
-              uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
-              with:
-                  version: ">= 363.0.0"
+                  token_format: access_token
 
             - name: Install mikefarah/yq
               if: inputs.publish_data_contract
@@ -182,9 +177,6 @@ jobs:
             - name: Publish data contracts to Pub/Sub
               if: inputs.publish_data_contract
               run: |
-                  TOKEN="$(gcloud auth print-access-token)"
-                  echo "::add-mask::$TOKEN"
-
                   # Build one message per changed contract file.
                   : > ./messages.jsonl
                   IFS=',' read -ra FILES <<< "$CHANGED_DATA_CONTRACTS"
@@ -232,5 +224,6 @@ jobs:
                     -H "Content-Type: application/json" \
                     -d @pubsub_body.json
               env:
+                  TOKEN: ${{ steps.google_auth_deploy.outputs.access_token }}
                   CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
                   INPUTS_DATA_CONTRACT_PATH: ${{ inputs.data_contract_path }}
