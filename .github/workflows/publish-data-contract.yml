@@ -219,7 +219,7 @@ jobs:
                     --retry-delay 2 \
                     --retry-all-errors \
                     --retry-max-time 60 \
-                    --connect-timeout 10 \ 
+                    --connect-timeout 10 \
                     -X POST \
                     "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
                     -H "Authorization: Bearer $TOKEN" \
