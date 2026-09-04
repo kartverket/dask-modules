@@ -91,6 +91,7 @@ jobs:
         runs-on: ubuntu-latest
         env:
             COLUMNS: 200
+            TOPIC: ${{ inputs.environment == 'prod' && 'projects/dataplattform-prod-9b1d/topics/data-contract-topic' || 'projects/dataplattform-dev-d335/topics/data-contract-topic' }}
         steps:
             - name: Checkout caller repository
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -160,12 +161,7 @@ jobs:
               with:
                   workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
                   service_account: ${{ inputs.service_account_deploy}}
-
-            - name: "Set up Cloud SDK"
-              if: inputs.publish_data_contract
-              uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
-              with:
-                  version: ">= 363.0.0"
+                  token_format: access_token
 
             - name: Install mikefarah/yq
               if: inputs.publish_data_contract
@@ -173,28 +169,58 @@ jobs:
                   wget https://github.com/mikefarah/yq/releases/download/v4.43.1/yq_linux_amd64 -O /usr/local/bin/yq
                   chmod +x /usr/local/bin/yq
 
-            - name: Publish changed contracts as JSON to Pub/Sub
+            - name: Publish data contracts to Pub/Sub
               if: inputs.publish_data_contract
               run: |
+                  # Build one message per changed contract file.
+                  : > ./messages.jsonl
                   IFS=',' read -ra FILES <<< "$CHANGED_DATA_CONTRACTS"
                   for file in "${FILES[@]}"; do
                       [[ -z "$file" ]] && continue
-
-                      if [[ "${INPUTS_ENVIRONMENT}" == "prod" ]]; then
-                          TOPIC="projects/dataplattform-prod-9b1d/topics/data-contract-topic"
-                      else
-                          TOPIC="projects/dataplattform-dev-d335/topics/data-contract-topic"
-                      fi
-
-                      echo "Publishing $file"
-                      printf '{"messages":[{"data":"%s"}]}' "$(yq -o json '.' "$file" | base64 -w0)" > ./pubsub_body.json
-
-                      curl -X POST \
-                      "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
-                      -H "Authorization: Bearer $(gcloud auth print-access-token)" \
-                      -H "Content-Type: application/json" \
-                      -d @pubsub_body.json
+                      echo "Adding $file"
+                      yq -o json '.' "$file" \
+                          | jq -c --arg repo "$GITHUB_REPOSITORY" \
+                              '{repository: $repo, data_contract: .}' \
+                          | base64 -w0 \
+                          | jq -Rc '{data: ., attributes: {message_type: "data_contract"}}' \
+                          >> ./messages.jsonl
                   done
+
+                  # Append the index message with all existing contract IDs and versions.
+                  ALL_CONTRACTS='[]'
+                  while IFS= read -r file; do
+                      [[ -z "$file" ]] && continue
+                      entry=$(yq -o json '{"id": .id, "version": .version}' "$file")
+                      ALL_CONTRACTS=$(jq -c --argjson e "$entry" '. + [$e]' <<< "$ALL_CONTRACTS")
+                  done < <(git ls-files "$INPUTS_DATA_CONTRACT_PATH" | grep -E "\.(yml|yaml)$")
+                  echo "Collected all existing data contracts: $ALL_CONTRACTS"
+
+                  jq -cn --arg repo "$GITHUB_REPOSITORY" --argjson contracts "$ALL_CONTRACTS" \
+                      '{repository: $repo, data_contract_index: $contracts}' \
+                      | base64 -w0 \
+                      | jq -Rc '{data: ., attributes: {message_type: "data_contract_index"}}' \
+                      >> ./messages.jsonl
+
+                  # Wrap all messages into a single Pub/Sub publish request body.
+                  jq -s '{messages: .}' ./messages.jsonl > ./pubsub_body.json
+
+                  echo "Publishing $(jq '.messages | length' ./pubsub_body.json) messages to $TOPIC"
+                  echo "::group::Pub/Sub request body"
+                  jq . ./pubsub_body.json
+                  echo "::endgroup::"
+
+                  curl -sS --fail-with-body \
+                    --retry 5 \
+                    --retry-delay 2 \
+                    --retry-all-errors \
+                    --retry-max-time 60 \
+                    --connect-timeout 10 \
+                    -X POST \
+                    "https://pubsub.googleapis.com/v1/$TOPIC:publish" \
+                    -H "Authorization: Bearer $TOKEN" \
+                    -H "Content-Type: application/json" \
+                    -d @pubsub_body.json
               env:
+                  TOKEN: ${{ steps.google_auth_deploy.outputs.access_token }}
                   CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
-                  INPUTS_ENVIRONMENT: ${{ inputs.environment }}
+                  INPUTS_DATA_CONTRACT_PATH: ${{ inputs.data_contract_path }}
