@@ -127,11 +127,10 @@ jobs:
                   workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
                   service_account: ${{ inputs.service_account_compute}}
 
-            - name: Setup Python
-              uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 #v6.3.0
+            - name: Install uv
+              uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
               with:
-                  python-version: "3.14"
-                  cache: "pip"
+                  enable-cache: true
 
             - uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
               id: octo-sts
@@ -147,13 +146,9 @@ jobs:
                   STEPS_OCTO_STS_OUTPUTS_TOKEN: ${{ steps.octo-sts.outputs.token }}
                   NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES: ${{ needs.get-changed-files.outputs.changed_files }}
 
-            - name: Install dependencies
-              run: |
-                  pip install -r dask-modules/scripts/validate_data_contract/requirements.txt
-
             - name: Validate data contracts
               run: |
-                  python dask-modules/scripts/validate_data_contract/validate_data_contract.py
+                  uv run --locked dask-modules/scripts/validate_data_contract/validate_data_contract.py
               env:
                   ENVIRONMENT: ${{ inputs.environment }}
                   SERVICE_ACCOUNT: ${{ inputs.service_account_compute }}
