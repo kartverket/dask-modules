@@ -97,7 +97,7 @@ jobs:
 
     publish-data_contract:
         needs: get-changed-files
-        if: needs.get-changed-files.outputs.changed_files != ''
+        # if: needs.get-changed-files.outputs.changed_files != ''
         runs-on: ubuntu-latest
         env:
             COLUMNS: 200
