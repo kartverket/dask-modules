@@ -81,6 +81,16 @@ jobs:
                   CHANGED_FILES_COMMA_SEPARATED="$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')"
                   echo "Changed contract files: $CHANGED_FILES_COMMA_SEPARATED"
                   echo "changed_files=$CHANGED_FILES_COMMA_SEPARATED" >> $GITHUB_OUTPUT
+
+                  echo "    variables..."
+                  echo $INPUTS_DATA_CONTRACT_PATH
+                  echo $INPUTS_LAST_PUBLISHED_REF
+                  echo $PREVIOUS_RELEASE
+                  echo $CURRENT_RELEASE
+                  echo $CONTRACT_PATTERN
+                  echo $GITHUB_REF_NAME
+                  echo $CHANGED_FILES
+                  echo $CHANGED_FILES_COMMA_SEPARATED
               env:
                   INPUTS_LAST_PUBLISHED_REF: ${{ inputs.last_published_ref }}
                   INPUTS_DATA_CONTRACT_PATH: ${{ inputs.data_contract_path }}
