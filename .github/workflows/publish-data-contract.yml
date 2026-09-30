@@ -162,7 +162,8 @@ jobs:
     publish-data-contract:
         needs: [get-changed-files, get-workload-identity-provider, validate-data-contract]
         runs-on: ubuntu-latest
-        if: inputs.publish_data_contract
+        # Waits for validate-data-contract, but still runs if it is skipped
+        if: ${{ inputs.publish_data_contract && !failure() && !cancelled() }}
         env:
             COLUMNS: 200
             TOPIC: ${{ inputs.environment == 'prod' && 'projects/dataplattform-prod-9b1d/topics/data-contract-topic' || 'projects/dataplattform-dev-d335/topics/data-contract-topic' }}
