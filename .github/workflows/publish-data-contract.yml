@@ -85,30 +85,13 @@ jobs:
                   INPUTS_LAST_PUBLISHED_REF: ${{ inputs.last_published_ref }}
                   INPUTS_DATA_CONTRACT_PATH: ${{ inputs.data_contract_path }}
 
-    publish-data_contract:
+    get-workload-identity-provider:
         needs: get-changed-files
-        if: needs.get-changed-files.outputs.changed_files != ''
         runs-on: ubuntu-latest
-        env:
-            COLUMNS: 200
-            TOPIC: ${{ inputs.environment == 'prod' && 'projects/dataplattform-prod-9b1d/topics/data-contract-topic' || 'projects/dataplattform-dev-d335/topics/data-contract-topic' }}
+        if: needs.get-changed-files.outputs.changed_files != '' || inputs.publish_data_contract
+        outputs:
+          workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
         steps:
-            - name: Checkout caller repository
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-              with:
-                  fetch-depth: 0
-                  ref: ${{ github.ref }}
-                  persist-credentials: false
-
-            - name: Checkout dask-modules
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-              with:
-                  fetch-depth: 0
-                  repository: kartverket/dask-modules
-                  path: dask-modules
-                  ref: ${{ inputs.workflow_ref }}
-                  persist-credentials: false
-
             - name: Create workload identity provider string
               id: create_workload_identity_provider
               run: |
@@ -120,11 +103,33 @@ jobs:
                   INPUTS_SERVICE_ACCOUNT_DEPLOY: ${{ inputs.service_account_deploy }}
                   INPUTS_AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
 
+    validate-data-contract:
+        needs: [get-workload-identity-provider, get-changed-files]
+        runs-on: ubuntu-latest
+        if: needs.get-changed-files.outputs.changed_files != ''
+        env:
+            COLUMNS: 200
+        steps:
+            - name: Checkout caller repository
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  fetch-depth: 0
+                  ref: ${{ github.ref }}
+                  persist-credentials: false
+            - name: Checkout dask-modules
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  fetch-depth: 0
+                  repository: kartverket/dask-modules
+                  path: dask-modules
+                  ref: ${{ inputs.workflow_ref }}
+                  persist-credentials: false
+
             - id: google_auth_compute
               name: Authenticate with Google Cloud
               uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
               with:
-                  workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
+                  workload_identity_provider: ${{ needs.get-workload-identity-provider.outputs.workload_identity_provider }}
                   service_account: ${{ inputs.service_account_compute}}
 
             - name: Install uv
@@ -154,23 +159,35 @@ jobs:
                   SERVICE_ACCOUNT: ${{ inputs.service_account_compute }}
                   CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
 
+    publish-data-contract:
+        needs: [get-changed-files, get-workload-identity-provider, validate-data-contract]
+        runs-on: ubuntu-latest
+        # Waits for validate-data-contract, but still runs if it is skipped
+        if: ${{ inputs.publish_data_contract && !failure() && !cancelled() }}
+        env:
+            COLUMNS: 200
+            TOPIC: ${{ inputs.environment == 'prod' && 'projects/dataplattform-prod-9b1d/topics/data-contract-topic' || 'projects/dataplattform-dev-d335/topics/data-contract-topic' }}
+        steps:
+            - name: Checkout caller repository
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  fetch-depth: 0
+                  ref: ${{ github.ref }}
+                  persist-credentials: false
             - id: google_auth_deploy
               name: Authenticate with Google Cloud
-              if: inputs.publish_data_contract
               uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
               with:
-                  workload_identity_provider: ${{ steps.create_workload_identity_provider.outputs.workload_identity_provider }}
+                  workload_identity_provider: ${{ needs.get-workload-identity-provider.outputs.workload_identity_provider }}
                   service_account: ${{ inputs.service_account_deploy}}
                   token_format: access_token
 
             - name: Install mikefarah/yq
-              if: inputs.publish_data_contract
               run: |
                   wget https://github.com/mikefarah/yq/releases/download/v4.43.1/yq_linux_amd64 -O /usr/local/bin/yq
                   chmod +x /usr/local/bin/yq
 
             - name: Publish data contracts to Pub/Sub
-              if: inputs.publish_data_contract
               run: |
                   # Build one message per changed contract file.
                   : > ./messages.jsonl
