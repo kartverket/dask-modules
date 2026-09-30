@@ -85,7 +85,7 @@ jobs:
                   INPUTS_LAST_PUBLISHED_REF: ${{ inputs.last_published_ref }}
                   INPUTS_DATA_CONTRACT_PATH: ${{ inputs.data_contract_path }}
 
-    preparation:
+    get-workload-identity-provider:
         needs: get-changed-files
         runs-on: ubuntu-latest
         if: needs.get-changed-files.outputs.changed_files != '' || inputs.publish_data_contract
@@ -103,8 +103,8 @@ jobs:
                   INPUTS_SERVICE_ACCOUNT_DEPLOY: ${{ inputs.service_account_deploy }}
                   INPUTS_AUTH_PROJECT_NUMBER: ${{ inputs.auth_project_number }}
 
-    validate-data_contract:
-        needs: [preparation, get-changed-files]
+    validate-data-contract:
+        needs: [get-workload-identity-provider, get-changed-files]
         runs-on: ubuntu-latest
         if: needs.get-changed-files.outputs.changed_files != ''
         env:
@@ -129,7 +129,7 @@ jobs:
               name: Authenticate with Google Cloud
               uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
               with:
-                  workload_identity_provider: ${{ needs.preparation.outputs.workload_identity_provider }}
+                  workload_identity_provider: ${{ needs.get-workload-identity-provider.outputs.workload_identity_provider }}
                   service_account: ${{ inputs.service_account_compute}}
 
             - name: Install uv
@@ -159,8 +159,8 @@ jobs:
                   SERVICE_ACCOUNT: ${{ inputs.service_account_compute }}
                   CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
 
-    publish-data_contract:
-        needs: [get-changed-files, preparation, validate-data_contract]
+    publish-data-contract:
+        needs: [get-changed-files, get-workload-identity-provider, validate-data-contract]
         runs-on: ubuntu-latest
         if: inputs.publish_data_contract
         env:
@@ -177,7 +177,7 @@ jobs:
               name: Authenticate with Google Cloud
               uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
               with:
-                  workload_identity_provider: ${{ needs.preparation.outputs.workload_identity_provider }}
+                  workload_identity_provider: ${{ needs.get-workload-identity-provider.outputs.workload_identity_provider }}
                   service_account: ${{ inputs.service_account_deploy}}
                   token_format: access_token
 
