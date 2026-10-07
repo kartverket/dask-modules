@@ -145,14 +145,12 @@ def configure_github_workflows(env: str, resource_name: str, project_id: str, pr
         "prod": "220770510673"
     }
     repo_to_replace = "dataplattform-kom-i-gang"
-    project_name_to_replace = "dataprodukter"
 
     replacement_tuples = [
         (project_number_to_replace[env], project_number),
         (deploy_sa_to_replace[env], f'{resource_name}-deploy@{project_id}.iam.gserviceaccount.com'),
         (compute_sa_to_replace[env], f'databricks-compute@{project_id}.iam.gserviceaccount.com'),
         (repo_to_replace, f'{resource_name}-data-ingestor'),
-        (project_name_to_replace, resource_name),
     ]
     for file_path in workflow_files:
         replace_text_in_file(file_path, replacement_tuples)
