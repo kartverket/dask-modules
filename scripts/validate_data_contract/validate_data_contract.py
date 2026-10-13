@@ -1,5 +1,5 @@
 # /// script
-# requires-python = "~=3.14"
+# requires-python = "~=3.14.0"
 # dependencies = [
 #     "databricks-sdk==0.139.0",
 #     "datacontract-cli[databricks]==1.2.1",
