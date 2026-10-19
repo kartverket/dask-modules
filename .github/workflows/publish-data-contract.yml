@@ -119,9 +119,6 @@ jobs:
               with:
                 workload_identity_provider: ${{ needs.get-workload-identity-provider.outputs.workload_identity_provider }}
                 service_account: ${{ inputs.service_account_compute}}
-                token_format: id_token
-                id_token_audience: https://datamarkedsplass.kartverket-intern.cloud
-                id_token_include_email: true
 
             - uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
               id: octo-sts
@@ -131,11 +128,10 @@ jobs:
 
             - name: Validate each changed contract file using kv-datacontract-validator
               run: |
-                  pipx install git+https://oauth2:${STEPS_OCTO_STS_OUTPUTS_TOKEN}@github.com/kartverket/kv-datacontracts-validator.git@v1.2.2#subdirectory=datacontract-validator
-                  kvdcv --files "${NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES}" --id-token "${STEPS_GOOGLE_AUTH_COMPUTE_OUTPUTS_ID_TOKEN}"
+                  pipx install git+https://oauth2:${STEPS_OCTO_STS_OUTPUTS_TOKEN}@github.com/kartverket/kv-datacontracts-validator.git@main#subdirectory=datacontract-validator
+                  kvdcv --files "${NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES}"
               env:
                   STEPS_OCTO_STS_OUTPUTS_TOKEN: ${{ steps.octo-sts.outputs.token }}
-                  STEPS_GOOGLE_AUTH_COMPUTE_OUTPUTS_ID_TOKEN: ${{ steps.google_auth_compute.outputs.id_token }}
                   NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES: ${{ needs.get-changed-files.outputs.changed_files }}
 
     publish-data-contract:
