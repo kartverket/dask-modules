@@ -126,6 +126,15 @@ jobs:
                   scope: kartverket/kv-datacontracts-validator
                   identity: kartverket_repos
 
+            - id: tailscale
+              name: Set up Tailscale
+              uses: tailscale/github-action@780049a30b6ff5c378a9e7b389d15ece7a204888 # v4.1.3
+              with:
+                oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+                oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+                tags: tag:github-runner
+                version: latest
+
             - name: Validate each changed contract file using kv-datacontract-validator
               run: |
                   pipx install git+https://oauth2:${STEPS_OCTO_STS_OUTPUTS_TOKEN}@github.com/kartverket/kv-datacontracts-validator.git@main#subdirectory=datacontract-validator
