@@ -140,6 +140,7 @@ jobs:
                   pipx install git+https://oauth2:${STEPS_OCTO_STS_OUTPUTS_TOKEN}@github.com/kartverket/kv-datacontracts-validator.git@test-kvdcv-validation#subdirectory=datacontract-validator
                   PYTHONUNBUFFERED=1 kvdcv --files "${NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES}"
               env:
+                  DATABRICKS_AUTH_TYPE: google-id
                   SERVICE_ACCOUNT: ${{ inputs.service_account_compute }}
                   STEPS_OCTO_STS_OUTPUTS_TOKEN: ${{ steps.octo-sts.outputs.token }}
                   NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES: ${{ needs.get-changed-files.outputs.changed_files }}
