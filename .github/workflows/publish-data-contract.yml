@@ -136,9 +136,10 @@ jobs:
                 version: latest
 
             - name: Validate each changed contract file using kv-datacontract-validator
+            #TODO: change td-2343-add-cicd-option to commit hash of release v2.0.0
               run: |
-                  pipx install git+https://oauth2:${STEPS_OCTO_STS_OUTPUTS_TOKEN}@github.com/kartverket/kv-datacontracts-validator.git@test-kvdcv-validation#subdirectory=datacontract-validator
-                  kvdcv --files "${NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES}"
+                  pipx install git+https://oauth2:${STEPS_OCTO_STS_OUTPUTS_TOKEN}@github.com/kartverket/kv-datacontracts-validator.git@td-2343-add-cicd-option#subdirectory=datacontract-validator
+                  kvdcv --cicd --files "${NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES}"
               env:
                   DATABRICKS_AUTH_TYPE: google-id
                   SERVICE_ACCOUNT: ${{ inputs.service_account_compute }}
