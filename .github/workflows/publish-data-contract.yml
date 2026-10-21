@@ -138,20 +138,12 @@ jobs:
             - name: Validate each changed contract file using kv-datacontract-validator
               run: |
                   pipx install git+https://oauth2:${STEPS_OCTO_STS_OUTPUTS_TOKEN}@github.com/kartverket/kv-datacontracts-validator.git@test-kvdcv-validation#subdirectory=datacontract-validator
-                  PYTHONUNBUFFERED=1 kvdcv --files "${NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES}"
+                  kvdcv --files "${NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES}"
               env:
                   DATABRICKS_AUTH_TYPE: google-id
                   SERVICE_ACCOUNT: ${{ inputs.service_account_compute }}
                   STEPS_OCTO_STS_OUTPUTS_TOKEN: ${{ steps.octo-sts.outputs.token }}
                   NEEDS_GET_CHANGED_FILES_OUTPUTS_CHANGED_FILES: ${{ needs.get-changed-files.outputs.changed_files }}
-
-            # - name: Validate data contracts
-            #   run: |
-            #       uv run --locked dask-modules/scripts/validate_data_contract/validate_data_contract.py
-            #   env:
-            #       ENVIRONMENT: ${{ inputs.environment }}
-            #       SERVICE_ACCOUNT: ${{ inputs.service_account_compute }}
-            #       CHANGED_DATA_CONTRACTS: ${{ needs.get-changed-files.outputs.changed_files }}
 
     publish-data-contract:
         needs: [get-changed-files, get-workload-identity-provider, validate-data-contract]
